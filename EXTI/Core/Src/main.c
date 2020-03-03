@@ -2,15 +2,15 @@
 
 //------ DEFINES
 //--- INPUTS
-#define USR_BT_PRESS	(!(GPIOA->IDR & GPIO_IDR_ID10_Msk))
+#define USR_BT_PRESS		(!(GPIOA->IDR & GPIO_IDR_ID10_Msk))
 
 //--- OUTPUTS
-#define Red_Led_On		(GPIOB->ODR |= GPIO_ODR_OD0_Msk)
-#define Red_Led_Off		(GPIOB->ODR &= ~GPIO_ODR_OD0_Msk)
-#define Green_Led_On	(GPIOA->ODR |= GPIO_ODR_OD7_Msk)
-#define	Green_Led_Off	(GPIOA->ODR &= ~GPIO_ODR_OD7_Msk)
-#define Blue_Led_On		(GPIOB->ODR |= GPIO_ODR_OD1_Msk)
-#define Blue_Led_Off	(GPIOB->ODR &= ~GPIO_ODR_OD1_Msk)
+#define Red_Led_On			(GPIOB->ODR |= GPIO_ODR_OD0_Msk)
+#define Red_Led_Off			(GPIOB->ODR &= ~GPIO_ODR_OD0_Msk)
+#define Green_Led_On		(GPIOA->ODR |= GPIO_ODR_OD7_Msk)
+#define	Green_Led_Off		(GPIOA->ODR &= ~GPIO_ODR_OD7_Msk)
+#define Blue_Led_On			(GPIOB->ODR |= GPIO_ODR_OD1_Msk)
+#define Blue_Led_Off		(GPIOB->ODR &= ~GPIO_ODR_OD1_Msk)
 #define Toggle_Red_Led		(GPIOB->ODR ^= GPIO_IDR_ID0_Msk)
 #define Toggle_Green_Led	(GPIOA->ODR ^=GPIO_IDR_ID7_Msk)
 #define Toggle_Blue_Led		(GPIOB->ODR ^= GPIO_IDR_ID1_Msk)
@@ -27,7 +27,6 @@ void TIM6_DAC_IRQHandler(void){
 				Toggle_Red_Led;
 				Green_Led_Off;
 				count=0;
-				user_bt_count=0;
 			}
 		}
 		else{
@@ -39,12 +38,8 @@ void TIM6_DAC_IRQHandler(void){
 void EXTI4_15_IRQHandler (void){
 	if(EXTI->PR == 0x0400){
 		EXTI->PR |= EXTI_PR_PIF10;
-		user_bt_count++;
-		if(user_bt_count==1){
-			Green_Led_On;
-			Red_Led_Off;
-			user_bt_count=0;
-		}
+		Green_Led_On;
+		Red_Led_Off;
 	}
 }
 
