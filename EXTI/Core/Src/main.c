@@ -7,29 +7,29 @@
 //--- OUTPUTS
 #define Red_Led_On			(GPIOB->ODR |= GPIO_ODR_OD0_Msk)
 #define Red_Led_Off			(GPIOB->ODR &= ~GPIO_ODR_OD0_Msk)
+#define Toggle_Red_Led		(GPIOB->ODR ^= GPIO_IDR_ID0_Msk)
 #define Green_Led_On		(GPIOA->ODR |= GPIO_ODR_OD7_Msk)
 #define	Green_Led_Off		(GPIOA->ODR &= ~GPIO_ODR_OD7_Msk)
+#define Toggle_Green_Led	(GPIOA->ODR ^=GPIO_IDR_ID7_Msk)
 #define Blue_Led_On			(GPIOB->ODR |= GPIO_ODR_OD1_Msk)
 #define Blue_Led_Off		(GPIOB->ODR &= ~GPIO_ODR_OD1_Msk)
-#define Toggle_Red_Led		(GPIOB->ODR ^= GPIO_IDR_ID0_Msk)
-#define Toggle_Green_Led	(GPIOA->ODR ^=GPIO_IDR_ID7_Msk)
 #define Toggle_Blue_Led		(GPIOB->ODR ^= GPIO_IDR_ID1_Msk)
 
 //--- Global Variables
 int user_bt_count=0, count=0, flag_EXTI=0;
 
-void TIM6_DAC_IRQHandler(void){
+void TIM6_DAC_IRQHandler(void){	//interrupts every 1 ms
 	if(TIM6->SR == 0x01){
 		TIM6->SR &= ~TIM_SR_UIF;	//Clear timer interrupt flag
 		count++;
 		if(count==100){
-			Toggle_Red_Led;
+			Toggle_Red_Led;			//toggle the red led every 100 ms
 			count=0;
 		}
 		if(flag_EXTI){										//if there was an EXTI int
 			user_bt_count++;								//counts up to 50 (50 ms)
 			if(user_bt_count==50){
-				Toggle_Green_Led;
+				Toggle_Green_Led;							//turns on/off the green led
 
 			}
 			if((user_bt_count>=50) && (!USR_BT_PRESS)){		//if the led has been toggled and we released the button
@@ -44,7 +44,7 @@ void TIM6_DAC_IRQHandler(void){
 
 void EXTI4_15_IRQHandler (void){
 	if(EXTI->PR == 0x0400){			//if there's EXTI interrupt
-		flag_EXTI=1;				//sets aux flag
+		flag_EXTI=1;				//sets aux flag for toggling the green led
 		EXTI->PR |= EXTI_PR_PIF10;	//clears the EXTI flag
 	}
 }
@@ -79,7 +79,7 @@ int main (void){
 	//--- TIM6 config
 	TIM6->DIER 		|= TIM_DIER_UIE;	//Enable interrupt
 	TIM6->PSC = 209;					//timer prescaler
-	TIM6->ARR = 9;						//counter counts up to
+	TIM6->ARR = 9;						//counter counts up to (interrupt every 1 ms)
 	TIM6->EGR 		|= TIM_EGR_UG;		//Update registers values
 	//Enables IRQ and IRQ priority
 	NVIC_EnableIRQ(TIM6_DAC_IRQn);

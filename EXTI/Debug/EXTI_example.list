@@ -250,7 +250,7 @@ __STATIC_INLINE void NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority)
 //--- Global Variables
 int user_bt_count=0, count=0, flag_EXTI=0;
 
-void TIM6_DAC_IRQHandler(void){
+void TIM6_DAC_IRQHandler(void){	//interrupts every 1 ms
  8000210:	b580      	push	{r7, lr}
  8000212:	af00      	add	r7, sp, #0
 	if(TIM6->SR == 0x01){
@@ -276,7 +276,7 @@ void TIM6_DAC_IRQHandler(void){
  8000234:	681b      	ldr	r3, [r3, #0]
  8000236:	2b64      	cmp	r3, #100	; 0x64
  8000238:	d108      	bne.n	800024c <TIM6_DAC_IRQHandler+0x3c>
-			Toggle_Red_Led;
+			Toggle_Red_Led;			//toggle the red led every 100 ms
  800023a:	4b1b      	ldr	r3, [pc, #108]	; (80002a8 <TIM6_DAC_IRQHandler+0x98>)
  800023c:	695a      	ldr	r2, [r3, #20]
  800023e:	4b1a      	ldr	r3, [pc, #104]	; (80002a8 <TIM6_DAC_IRQHandler+0x98>)
@@ -304,7 +304,7 @@ void TIM6_DAC_IRQHandler(void){
  8000260:	681b      	ldr	r3, [r3, #0]
  8000262:	2b32      	cmp	r3, #50	; 0x32
  8000264:	d107      	bne.n	8000276 <TIM6_DAC_IRQHandler+0x66>
-				Toggle_Green_Led;
+				Toggle_Green_Led;							//turns on/off the green led
  8000266:	23a0      	movs	r3, #160	; 0xa0
  8000268:	05db      	lsls	r3, r3, #23
  800026a:	695a      	ldr	r2, [r3, #20]
@@ -364,7 +364,7 @@ void EXTI4_15_IRQHandler (void){
  80002be:	00db      	lsls	r3, r3, #3
  80002c0:	429a      	cmp	r2, r3
  80002c2:	d109      	bne.n	80002d8 <EXTI4_15_IRQHandler+0x24>
-		flag_EXTI=1;				//sets aux flag
+		flag_EXTI=1;				//sets aux flag for toggling the green led
  80002c4:	4b07      	ldr	r3, [pc, #28]	; (80002e4 <EXTI4_15_IRQHandler+0x30>)
  80002c6:	2201      	movs	r2, #1
  80002c8:	601a      	str	r2, [r3, #0]
@@ -511,7 +511,7 @@ int main (void){
  800039e:	4b1c      	ldr	r3, [pc, #112]	; (8000410 <main+0x128>)
  80003a0:	22d1      	movs	r2, #209	; 0xd1
  80003a2:	629a      	str	r2, [r3, #40]	; 0x28
-	TIM6->ARR = 9;						//counter counts up to
+	TIM6->ARR = 9;						//counter counts up to (interrupt every 1 ms)
  80003a4:	4b1a      	ldr	r3, [pc, #104]	; (8000410 <main+0x128>)
  80003a6:	2209      	movs	r2, #9
  80003a8:	62da      	str	r2, [r3, #44]	; 0x2c
