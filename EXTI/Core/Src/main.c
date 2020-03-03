@@ -43,7 +43,7 @@ void TIM6_DAC_IRQHandler(void){	//interrupts every 1 ms
 }
 
 void EXTI4_15_IRQHandler (void){
-	if(EXTI->PR == 0x0400){			//if there's EXTI interrupt
+	if(EXTI->PR & EXTI_PR_PIF10){			//if there's EXTI interrupt
 		flag_EXTI=1;				//sets aux flag for toggling the green led
 		EXTI->PR |= EXTI_PR_PIF10;	//clears the EXTI flag
 	}
@@ -71,8 +71,7 @@ int main (void){
 
 	//--- Buttons config
 	//User button
-	GPIOA->MODER	&= ~GPIO_MODER_MODE10_1;
-	GPIOA->MODER	&= ~GPIO_MODER_MODE10_0;	//Set GPIOB pin 10 as input
+	GPIOA->MODER	&= ~GPIO_MODER_MODE10_Msk;	//Set GPIOB pin 10 as input
 	GPIOA->PUPDR	|= GPIO_PUPDR_PUPD10_0;		//GPIO pin 10 has a pull-up
 
 	//------ TIMER init
