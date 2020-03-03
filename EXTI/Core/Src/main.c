@@ -19,7 +19,7 @@
 int user_bt_count=0, count=0, flag_EXTI=0;
 
 void TIM6_DAC_IRQHandler(void){	//interrupts every 1 ms
-	if(TIM6->SR == 0x01){
+	if(TIM6->SR & TIM_SR_UIF){
 		TIM6->SR &= ~TIM_SR_UIF;	//Clear timer interrupt flag
 		count++;
 		if(count==100){
