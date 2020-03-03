@@ -16,30 +16,36 @@
 #define Toggle_Blue_Led		(GPIOB->ODR ^= GPIO_IDR_ID1_Msk)
 
 //--- Global Variables
-int user_bt_count=0, count=0;
+int user_bt_count=0, count=0, flag_EXTI=0;
 
 void TIM6_DAC_IRQHandler(void){
 	if(TIM6->SR == 0x01){
 		TIM6->SR &= ~TIM_SR_UIF;	//Clear timer interrupt flag
-		if(!USR_BT_PRESS){
-			count++;
-			if(count==100){
-				Toggle_Red_Led;
-				Green_Led_Off;
-				count=0;
+		count++;
+		if(count==100){
+			Toggle_Red_Led;
+			count=0;
+		}
+		if(flag_EXTI){										//if there was an EXTI int
+			user_bt_count++;								//counts up to 50 (50 ms)
+			if(user_bt_count==50){
+				Toggle_Green_Led;
+
+			}
+			if((user_bt_count>=50) && (!USR_BT_PRESS)){		//if the led has been toggled and we released the button
+				flag_EXTI=0;								//clears flag
 			}
 		}
 		else{
-			count=0;
+			user_bt_count=0;
 		}
 	}
 }
 
 void EXTI4_15_IRQHandler (void){
-	if(EXTI->PR == 0x0400){
-		EXTI->PR |= EXTI_PR_PIF10;
-		Green_Led_On;
-		Red_Led_Off;
+	if(EXTI->PR == 0x0400){			//if there's EXTI interrupt
+		flag_EXTI=1;				//sets aux flag
+		EXTI->PR |= EXTI_PR_PIF10;	//clears the EXTI flag
 	}
 }
 
@@ -89,6 +95,5 @@ int main (void){
 	while(1){
 
 	}
-
 	return 0;
 }
