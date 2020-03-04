@@ -60,36 +60,24 @@ void EXTI4_15_IRQHandler (void)
 
 int main (void)
 {
-	//------ Clock init
+	//------ Clock config
 	//--- GPIO Clock init
 	RCC->IOPENR		|= RCC_IOPENR_GPIOAEN;
 	RCC->IOPENR 	|= RCC_IOPENR_GPIOBEN;
 	//--- TIM6 Clock init
 	RCC->APB1ENR 	|= RCC_APB1ENR_TIM6EN;
 
-	//------ GPIO init
-	//--- LEDs config
-	//Green
-	GPIOA->MODER 	&= ~(GPIO_MODER_MODE7_1 | GPIO_MODER_MODE10_Msk);	//Set GPIOA pin 7 as output
-	GPIOA->BSRR 	|= GPIO_BSRR_BR_7;		//Set pin to low
-	//Blue (1) and Red (0)
-	GPIOB->MODER	= 	GPIO_MODER_MODE1_0 | GPIO_MODER_MODE0_0;
-	//GPIOB->MODER	|= (GPIO_MODER_MODE1_Msk | GPIO_MODER_MODE0_Msk);
-	GPIOB->BSRR		|= (GPIO_BSRR_BR_1 | GPIO_BSRR_BR_0);
-	//Blue
-//	GPIOB->MODER	= GPIO_MODER_MODE1_0;	//Set GPIOB pin 1 as output
-//	GPIOB->BSRR		|= GPIO_BSRR_BR_1;		//Set pin to low
-//	//Red
-//	GPIOB->MODER	|= GPIO_MODER_MODE0_0;	//Set GPIOB pin 0 as outuput
-//	GPIOB->BSRR		|= GPIO_BSRR_BR_0;		//Set pin to low
+	//------ GPIO config
+	GPIOA->MODER 	&= 	~(GPIO_MODER_MODE7_1 |				//Set GPIOA pin 7 as output - Green Led
+						GPIO_MODER_MODE10_Msk);				//Set GPIOA pin 10 as input - User Button
+	GPIOA->BSRR 	|= GPIO_BSRR_BR_7;						//Set GPIOA 7 pin to low
+	GPIOA->PUPDR	|= GPIO_PUPDR_PUPD10_0;					//GPIO pin 10 has a pull-up
+	GPIOB->MODER	= 	GPIO_MODER_MODE1_0					//Set GPIOB pin 1 as output - Blue Led
+						| GPIO_MODER_MODE0_0;				//Set GPIOB pin 0 as output - Red Led
+	GPIOB->BSRR		|= (GPIO_BSRR_BR_1 | GPIO_BSRR_BR_0);	//Set GPIOB pin 1 and 2 to low
 
-	//--- Buttons config
-	//User button
-	//GPIOA->MODER	&= ~GPIO_MODER_MODE10_Msk;	//Set GPIOA pin 10 as input
-	GPIOA->PUPDR	|= GPIO_PUPDR_PUPD10_0;		//GPIO pin 10 has a pull-up
-
-	//------ TIMER init
-	//--- TIM6 config
+	//------ TIMER config
+	//--- TIM6 init
 	TIM6->DIER 		|= TIM_DIER_UIE;	//Enable interrupt
 	TIM6->PSC = 209;					//timer prescaler
 	TIM6->ARR = 9;						//counter counts up to (interrupt every 1 ms)
@@ -99,7 +87,7 @@ int main (void)
 	NVIC_SetPriority(TIM6_DAC_IRQn, 0);
 	TIM6->CR1 		|= TIM_CR1_CEN;		//enables the counter
 
-	//----- EXTI init
+	//----- EXTI config
 	EXTI->IMR	|= EXTI_IMR_IM10;
 	EXTI->FTSR	|= EXTI_FTSR_FT10;
 	NVIC_EnableIRQ(EXTI4_15_IRQn);
