@@ -16,7 +16,10 @@
 #define TOGGLE_BLUE_LED		(GPIOB->ODR ^= GPIO_IDR_ID1_Msk)
 
 //--- Global Variables
-int user_bt_count=0, count=0, flag_EXTI=0;
+int user_bt_count	=0,	//counter to debounce the button
+	count			=0,	//counter to toggle the red led
+	flag_EXTI		=0,	//flag for EXTI interrupt
+	flag_TIM6		=0;	//flag for TIM6 interrupt
 
 void TIM6_DAC_IRQHandler(void)		//interrupts every 1 ms
 {
@@ -60,24 +63,35 @@ void EXTI4_15_IRQHandler (void)
 
 int main (void)
 {
-	//------ Clock config
-	//--- GPIO Clock init
-	RCC->IOPENR		|= RCC_IOPENR_GPIOAEN;
-	RCC->IOPENR 	|= RCC_IOPENR_GPIOBEN;
-	//--- TIM6 Clock init
-	RCC->APB1ENR 	|= RCC_APB1ENR_TIM6EN;
-
 	//------ GPIO config
-	GPIOA->MODER 	&= 	~(GPIO_MODER_MODE7_1 |				//Set GPIOA pin 7 as output - Green Led
-						GPIO_MODER_MODE10_Msk);				//Set GPIOA pin 10 as input - User Button
-	GPIOA->BSRR 	|= GPIO_BSRR_BR_7;						//Set GPIOA 7 pin to low
-	GPIOA->PUPDR	|= GPIO_PUPDR_PUPD10_0;					//GPIO pin 10 has a pull-up
-	GPIOB->MODER	= 	GPIO_MODER_MODE1_0					//Set GPIOB pin 1 as output - Blue Led
-						| GPIO_MODER_MODE0_0;				//Set GPIOB pin 0 as output - Red Led
-	GPIOB->BSRR		|= (GPIO_BSRR_BR_1 | GPIO_BSRR_BR_0);	//Set GPIOB pin 1 and 2 to low
+	/*GPIOA
+	 * PA14 -> AF mode (SWD_IO)		| Low speed	| Push pull
+	 * PA13 -> AF mode (SWD_CK)		| Low speed	| Push pull
+	 * PA10	-> Input (User Button)	| Low speed	| Pull-up
+	 * PA7	-> Output (Green Led)	| Low speed | Push pull
+	 */
+	RCC->IOPENR		|= 		RCC_IOPENR_GPIOAEN		;
+
+	GPIOA->MODER 	&= 	~(	GPIO_MODER_MODE7_1 		|
+							GPIO_MODER_MODE10_Msk	);
+	GPIOA->BSRR 	|= 		GPIO_BSRR_BR_7			;
+	GPIOA->PUPDR	|= 		GPIO_PUPDR_PUPD10_0		;
+
+	/*GPIOB
+	 * PB1	-> Output (Blue Led)	| Low speed	| Push pull
+	 * PB0	-> Output (Red Led)		| Low speed | Push pull
+	 */
+	RCC->IOPENR 	|= 	RCC_IOPENR_GPIOBEN	;
+
+	GPIOB->MODER	= 	GPIO_MODER_MODE1_0	|
+						GPIO_MODER_MODE0_0	;
+	GPIOB->BSRR		|= 	GPIO_BSRR_BR_1 		|
+						GPIO_BSRR_BR_0		;
 
 	//------ TIMER config
 	//--- TIM6 init
+	RCC->APB1ENR 	|= RCC_APB1ENR_TIM6EN;
+
 	TIM6->DIER 		|= TIM_DIER_UIE;	//Enable interrupt
 	TIM6->PSC = 209;					//timer prescaler
 	TIM6->ARR = 9;						//counter counts up to (interrupt every 1 ms)
