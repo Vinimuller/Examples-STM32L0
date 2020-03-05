@@ -38,7 +38,7 @@ void TIM6_Init (void)
 	RCC->APB1ENR 	|= RCC_APB1ENR_TIM6EN;
 
 	TIM6->DIER 		|= TIM_DIER_UIE;	//Enable interrupt
-	TIM6->PSC = 2000;					//timer prescaler
+	TIM6->PSC = 2099;					//timer prescaler
 	TIM6->ARR = 209;					//counter counts up to
 	TIM6->EGR 		|= TIM_EGR_UG;		//Update registers values
 	//Enables IRQ and IRQ priority

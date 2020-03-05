@@ -6,8 +6,8 @@
  */
 #include "stm32l053xx.h"
 
-extern int	flag_EXTI,	//flag for EXTI interrupt
-			flag_TIM6;	//flag for TIM6 interrupt
+extern uint8_t	flag_EXTI,	//flag for EXTI interrupt
+				flag_TIM6;	//flag for TIM6 interrupt
 
 void TIM6_DAC_IRQHandler(void)
 {
@@ -22,7 +22,7 @@ void EXTI4_15_IRQHandler (void)
 {
 	if(EXTI->PR & EXTI_PR_PIF10)	//if there's EXTI interrupt
 	{
-		flag_EXTI=1;				//sets EXTI flag
+		flag_EXTI = 1;				//sets EXTI flag
 		EXTI->PR |= EXTI_PR_PIF10;	//clears the EXTI flag
 	}
 }

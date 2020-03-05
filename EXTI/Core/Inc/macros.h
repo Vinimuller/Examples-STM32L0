@@ -24,7 +24,8 @@
 #define TOGGLE_BLUE_LED		(GPIOB->ODR ^= GPIO_IDR_ID1_Msk)
 
 //--- GENERAL
-#define UP		1
-#define DOWN	0
+#define UP				1
+#define DOWN			0
+#define BUTTON_DEBOUNCE	50
 
 #endif /* INC_MACROS_H_ */
