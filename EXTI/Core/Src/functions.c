@@ -8,7 +8,6 @@
 #include "macros.h"
 
 extern int	user_bt_count,	//counter to debounce the button
-			count,			//counter to toggle the red led
 			flag_EXTI,		//flag for EXTI interrupt
 			flag_TIM6,		//flag for TIM6 interrupt
 			flag_frequency;	//flag to indicate if we are increasing or decreasing the frequency
