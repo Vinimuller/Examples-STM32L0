@@ -10,7 +10,6 @@
 
 //--- Global Variables
 int user_bt_count	=0,	//counter to debounce the button
-	count			=0,	//counter to toggle the red led
 	flag_EXTI		=0,	//flag for EXTI interrupt
 	flag_TIM6		=0,	//flag for TIM6 interrupt
 	flag_frequency	=1;	//flag to indicate if we are increasing or decreasing the frequency

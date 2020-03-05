@@ -15,13 +15,8 @@ extern int	user_bt_count,	//counter to debounce the button
 
 void Blink_Red_Led (void)
 {
-	flag_TIM6 = 0;			//clears TIM6 flag
-	count++;
-	if(count==100)
-	{
-		TOGGLE_RED_LED;		//toggle the red led every 100 ms
-		count=0;
-	}
+	flag_TIM6 = 0;		//clears TIM6 flag
+	TOGGLE_RED_LED;		//toggle the red led every 100 ms
 }
 
 void Change_Frequency (void)
