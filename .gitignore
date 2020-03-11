@@ -60,3 +60,5 @@ Basic_blink/.DS_Store
 EXTI/.settings/language.settings.xml
 
 EXTI/Debug/
+
+ADC/Debug/
