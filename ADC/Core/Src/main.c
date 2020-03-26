@@ -12,13 +12,11 @@
 #include "macros.h"
 #include "init.h"
 
-uint8_t	flag_TIM6 = 0,
-		AD_CAL = 0,
-		T_Start = 0,
-		T_ADC_Conv = 0;
-int		measure = 0,
-		temperature = 0,
-		v_ref = 0;
+uint8_t	AD_CAL 		= 0,
+		T_Delay		= 0;
+int		measure 	= 0,
+		temperature	= 0,
+		v_ref 		= 0;
 
 void ADC_Cal (void);
 void ADC_ON (void);
@@ -26,37 +24,9 @@ void ADC_OFF (void);
 
 int main (void)
 {
-	GPIO_Init();
-	TIM6_Init();
+	ADC_Init();
 
-//	ADC_Init();
-	RCC->APB2ENR 	|= 	RCC_APB2ENR_ADC1EN;
-	ADC1->CFGR2 	|= 	ADC_CFGR2_CKMODE_0;	//sets ADC clock as PCLK/2
-	ADC->CCR 		|= 	ADC_CCR_LFMEN;
-	ADC1->SMPR 		|= 	ADC_SMPR_SMPR_1	|	//sets sample time for 12.5 ADC clock cycles
-						ADC_SMPR_SMPR_0	;	//because we need 10.5 ADC clock cycles at least
-
-//	ADC_Cal();
-	//First we'll calibrate the ADC
-	if(ADC1->CR & ADC_CR_ADEN)			//we make sure that ADEN = 0
-	{
-		ADC1->CR |= ADC_CR_ADDIS;
-		while(ADC1->CR & ADC_CR_ADEN);
-	}
-	ADC1->CFGR1 &= ~ADC_CFGR1_DMAEN;	//and DMAEN = 0
-	ADC1->CR |= ADC_CR_ADVREGEN;		//enables the voltage regulator
-	ADC1->CR |= ADC_CR_ADCAL;			//and then we set ADCAL
-	while(ADC1->CR & ADC_CR_ADCAL);		//we wait until ADCAL = 0 (can be handled by interrupt)
-	AD_CAL =(ADC1->CALFACT & ADC_CALFACT_CALFACT);
-
-//	ADC_ON();
-	//Turning ADC on
-	if(ADC1->ISR & ADC_ISR_ADRDY)			//we make sure ADRDY = 0
-	{
-		ADC1->ISR |= ADC_ISR_ADRDY;			//by setting it to 1
-	}
-	ADC1->CR |= ADC_CR_ADEN;				//then we enable the ADC
-	while(!(ADC1->ISR & ADC_ISR_ADRDY));	//and wait for it to be ready. Can be handled by interrupt
+	ADC_ON();
 
 	//Reading the temperature sensor
 	if(ADC1->CR & ADC_CR_ADSTART)			//we have to be sure there's no ongoing conversion
@@ -66,15 +36,21 @@ int main (void)
 	}
 	ADC1->CHSELR |= ADC_CHSELR_CHSEL18;		//selecting the TSEN channel
 	ADC->CCR |= ADC_CCR_TSEN; 				//enables temperature sensor
-	T_Start = 1;							//we have to wait for 10 us for the temp sensor to wake up
-	while(T_Start);
+	T_Delay = 21;							//we have to wait for 10 us for the temp sensor to wake up
+	while(T_Delay)
+	{
+		T_Delay--;
+	}
 	ADC1->CR |= ADC_CR_ADSTART;				//we start the conversion
-	T_ADC_Conv = 2;							//and wait for the properly time
-	while(T_ADC_Conv);
+	T_Delay = 42;							//and wait for the properly time
+	while(T_Delay)
+	{
+		T_Delay--;
+	}
 	measure = ADC1->DR & ADC_DR_DATA;		//we store the ADC data in measure
 
 	//temp calc
-	temperature = ((measure * VDD_APPLI / VDD_CALIB) - (int32_t) *TEMP30_CAL_ADDR );
+	temperature = ((measure * VDD_APPLI / VDD_CALIB) - (int32_t) *TEMP30_CAL_ADDR);
 	temperature = temperature * (int32_t)(130 - 30);
 	temperature = temperature / (int32_t)(*TEMP130_CAL_ADDR - *TEMP30_CAL_ADDR);
 	temperature = temperature + 30;
@@ -87,26 +63,23 @@ int main (void)
 	}
 	ADC1->CHSELR |= ADC_CHSELR_CHSEL17;		//selecting the VREF channel
 	ADC->CCR |= ADC_CCR_VREFEN; 			//enables temperature sensor
-	T_Start = 1;							//we have to wait for 10 us for the temp sensor to wake up
-	while(T_Start);
+	T_Delay = 21;							//we have to wait for 10 us for the temp sensor to wake up
+	while(T_Delay)
+	{
+		T_Delay--;
+	}
 	ADC1->CR |= ADC_CR_ADSTART;				//we start the conversion
-	T_ADC_Conv = 2;							//and wait for the properly time
-	while(T_ADC_Conv);
+	T_Delay = 42;							//and wait for the properly time
+	while(T_Delay)
+	{
+		T_Delay--;
+	}
 	measure = ADC1->DR & ADC_DR_DATA;		//we store the ADC data in measure
 
 	//vref calc
-	v_ref = (3 * (int32_t) (*VREFINT_CAL)) / measure;
+	v_ref = (3000 * (int32_t) (*VREFINT_CAL)) / measure;	//*3000 so we have Vref in mV
 
-//	ADC_OFF();
-	//Turning ADC off
-	if(ADC1->CR & ADC_CR_ADSTART)			//if there's an ongoing conversion
-	{
-		ADC1->CR |= ADC_CR_ADSTP;			//we'll stop it
-		while(ADC1->CR & ADC_CR_ADSTP);
-	}
-	ADC1->CR |= ADC_CR_ADDIS;				//disables the ADC
-	while(ADC1->CR & ADC_CR_ADEN);
-	ADC1->ISR |= ADC_ISR_ADRDY;				//and clear ADRDY
+	ADC_OFF();
 
 	while(1)
 	{
@@ -118,41 +91,40 @@ int main (void)
 
 void ADC_Cal (void)
 {
-//	//First we'll calibrate the ADC
-//	if(ADC1->CR & ADC_CR_ADEN)			//we make sure that ADEN = 0
-//	{
-//		ADC1->CR |= ADC_CR_ADDIS;
-//		while(ADC1->CR & ADC_CR_ADEN);
-//	}
-//	ADC1->CFGR1 &= ~ADC_CFGR1_DMAEN;	//and DMAEN = 0
-//	ADC1->CR |= ADC_CR_ADVREGEN;		//enables the voltage regulator
-//	ADC1->CR |= ADC_CR_ADCAL;			//and then we set ADCAL
-//	while(ADC1->CR & ADC_CR_ADCAL);		//we wait until ADCAL = 0 (can be handled by interrupt)
-//	AD_CAL =(ADC1->CALFACT & ADC_CALFACT_CALFACT);
+	if(ADC1->CR & ADC_CR_ADEN)						//we make sure that ADEN = 0
+	{
+		ADC1->CR |= ADC_CR_ADDIS;
+		while(ADC1->CR & ADC_CR_ADEN);
+	}
+	ADC1->CFGR1 &= ~ADC_CFGR1_DMAEN;				//and DMAEN = 0
+	ADC1->CR |= ADC_CR_ADVREGEN;					//enables the voltage regulator
+	ADC1->CR |= ADC_CR_ADCAL;						//and then we set ADCAL
+	while(ADC1->CR & ADC_CR_ADCAL);					//we wait until ADCAL = 0 (can be handled by interrupt)
+	AD_CAL =(ADC1->CALFACT & ADC_CALFACT_CALFACT);
 }
 
 void ADC_ON (void)
 {
-//	//Turning ADC on
-//	if(ADC1->ISR & ADC_ISR_ADRDY)			//we make sure ADRDY = 0
-//	{
-//		ADC1->ISR |= ADC_ISR_ADRDY;			//by setting it to 1
-//	}
-//	ADC1->CR |= ADC_CR_ADEN;				//then we enable the ADC
-//	while(!(ADC1->ISR & ADC_ISR_ADRDY));	//and wait for it to be ready. Can be handled by interrupt
+	ADC_Cal();		//we have to calibrate the ADC everytime we wake it up
+
+	if(ADC1->ISR & ADC_ISR_ADRDY)			//we make sure ADRDY = 0
+	{
+		ADC1->ISR |= ADC_ISR_ADRDY;			//by setting it to 1
+	}
+	ADC1->CR |= ADC_CR_ADEN;				//then we enable the ADC
+	while(!(ADC1->ISR & ADC_ISR_ADRDY));	//and wait for it to be ready. Can be handled by interrupt
 }
 
 void ADC_OFF (void)
 {
-//	//Turning ADC off
-//	if(ADC1->CR & ADC_CR_ADSTART)			//if there's an ongoing conversion
-//	{
-//		ADC1->CR |= ADC_CR_ADSTP;			//we'll stop it
-//		while(ADC1->CR & ADC_CR_ADSTP);
-//	}
-//	ADC1->CR |= ADC_CR_ADDIS;				//disables the ADC
-//	while(ADC1->CR & ADC_CR_ADEN);
-//	ADC1->ISR |= ADC_ISR_ADRDY;				//and clear ADRDY
+	if(ADC1->CR & ADC_CR_ADSTART)			//if there's an ongoing conversion
+	{
+		ADC1->CR |= ADC_CR_ADSTP;			//we'll stop it
+		while(ADC1->CR & ADC_CR_ADSTP);
+	}
+	ADC1->CR |= ADC_CR_ADDIS;				//disables the ADC
+	while(ADC1->CR & ADC_CR_ADEN);
+	ADC1->ISR |= ADC_ISR_ADRDY;				//and clear ADRDY
 }
 
 /*
