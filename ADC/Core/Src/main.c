@@ -12,18 +12,18 @@
 #include "macros.h"
 #include "init.h"
 
-uint8_t	AD_CAL 		= 0,
-		T_Delay		= 0;
-int		measure 	= 0,
-		temperature	= 0,
-		v_ref 		= 0;
+uint16_t	measure 	= 0,	//AD read after a conversion
+			temperature	= 0,	//temperature in Celsius degrees measured (after calculation)
+			v_ref 		= 0;	//internal reference voltage measured (after calculation)
 
 void ADC_Cal (void);
-void ADC_ON (void);
+void ADC_ON  (void);
 void ADC_OFF (void);
 
 int main (void)
 {
+	ADC_OFF();		//we have to be sure that the ADC is disabled before initializing it
+
 	ADC_Init();
 
 	ADC_ON();
@@ -36,24 +36,15 @@ int main (void)
 	}
 	ADC1->CHSELR |= ADC_CHSELR_CHSEL18;		//selecting the TSEN channel
 	ADC->CCR |= ADC_CCR_TSEN; 				//enables temperature sensor
-	T_Delay = 21;							//we have to wait for 10 us for the temp sensor to wake up
-	while(T_Delay)
-	{
-		T_Delay--;
-	}
 	ADC1->CR |= ADC_CR_ADSTART;				//we start the conversion
-	T_Delay = 42;							//and wait for the properly time
-	while(T_Delay)
-	{
-		T_Delay--;
-	}
+	while(!(ADC1->ISR & ADC_ISR_EOC));		//and wait for EOC flag to set
 	measure = ADC1->DR & ADC_DR_DATA;		//we store the ADC data in measure
-
-	//temp calc
+											//and EOC automatically goes to 0
+	//temperature calculation as in RM example
 	temperature = ((measure * VDD_APPLI / VDD_CALIB) - (int32_t) *TEMP30_CAL_ADDR);
 	temperature = temperature * (int32_t)(130 - 30);
 	temperature = temperature / (int32_t)(*TEMP130_CAL_ADDR - *TEMP30_CAL_ADDR);
-	temperature = temperature + 30;
+	temperature = temperature + 30;			//the temperature read is now stored in temperature
 
 	//Reading the internal reference voltage
 	if(ADC1->CR & ADC_CR_ADSTART)			//we have to be sure there's no ongoing conversion
@@ -62,21 +53,12 @@ int main (void)
 		while(ADC1->CR & ADC_CR_ADSTP);
 	}
 	ADC1->CHSELR |= ADC_CHSELR_CHSEL17;		//selecting the VREF channel
-	ADC->CCR |= ADC_CCR_VREFEN; 			//enables temperature sensor
-	T_Delay = 21;							//we have to wait for 10 us for the temp sensor to wake up
-	while(T_Delay)
-	{
-		T_Delay--;
-	}
+	ADC->CCR |= ADC_CCR_VREFEN; 			//enables internal reference voltage
 	ADC1->CR |= ADC_CR_ADSTART;				//we start the conversion
-	T_Delay = 42;							//and wait for the properly time
-	while(T_Delay)
-	{
-		T_Delay--;
-	}
+	while(!(ADC1->ISR & ADC_ISR_EOC));		//and wait for EOC flag to set
 	measure = ADC1->DR & ADC_DR_DATA;		//we store the ADC data in measure
-
-	//vref calc
+											//and EOC automatically goes to 0
+	//Vref calculation as in RM
 	v_ref = (3000 * (int32_t) (*VREFINT_CAL)) / measure;	//*3000 so we have Vref in mV
 
 	ADC_OFF();
@@ -100,12 +82,11 @@ void ADC_Cal (void)
 	ADC1->CR |= ADC_CR_ADVREGEN;					//enables the voltage regulator
 	ADC1->CR |= ADC_CR_ADCAL;						//and then we set ADCAL
 	while(ADC1->CR & ADC_CR_ADCAL);					//we wait until ADCAL = 0 (can be handled by interrupt)
-	AD_CAL =(ADC1->CALFACT & ADC_CALFACT_CALFACT);
 }
 
 void ADC_ON (void)
 {
-	ADC_Cal();		//we have to calibrate the ADC everytime we wake it up
+	ADC_Cal();		//we have to calibrate the ADC every time we wake it up
 
 	if(ADC1->ISR & ADC_ISR_ADRDY)			//we make sure ADRDY = 0
 	{
