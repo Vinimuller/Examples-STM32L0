@@ -37,8 +37,8 @@ void ADC_Init (void)
 						ADC_SMPR_SMPR_0	;		//because we need 10.5 ADC clock cycles at least
 
 	//--- Calibration procedure
-	ADC1->CR |= ADC_CR_ADCAL;			//starting the calibration
-	while(ADC1->CR & ADC_CR_ADCAL);		//we have to wait until ADCAL = 0 (can be handled by interrupt)
+	ADC1->CR |= ADC_CR_ADCAL;				//starting the calibration
+	while(ADC1->CR & ADC_CR_ADCAL);			//we have to wait until ADCAL = 0 (can be handled by interrupt)
 
 	ADC1->CR |= ADC_CR_ADEN;				//then we enable the ADC
 	while(!(ADC1->ISR & ADC_ISR_ADRDY));	//and wait for it to be ready. Can be handled by interrupt

@@ -25,7 +25,7 @@
  * System clock is running at 2.1 MHz
  * Ex.: 10 uS / (1 / 2.1 MHz) = 21 system clock cycles to wait for 10 uS
  */
-#define TIME_10uSEC		21
+#define TIME_10uSEC		21	//21 system clock cycles to wait for 10uS
 
 //--- ADC defines
 //used for channel select

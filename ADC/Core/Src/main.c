@@ -46,7 +46,7 @@ int main (void)
 		//Vref calculation as in RM
 		v_ref = (3000 * (int32_t) (*VREFINT_CAL)) / measure;	//*3000 so we have Vref in mV
 
-		while(1);	//pra travar o programa aqui
+		while(1);	//so we can hold the uC here after reading the temperature and Vref
 	}
 
 	return 0;
