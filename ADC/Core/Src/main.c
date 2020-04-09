@@ -81,7 +81,7 @@ void ADC_Config (uint8_t Channel)
 	if(!ADC_error)		//if there wasn't any error
 	{
 		ADC1->CR |= ADC_CR_ADEN;				//then we enable the ADC
-		while(!(ADC1->ISR & ADC_ISR_ADRDY));	//and wait for it to be ready. Can be handled by interrupt
+		while(!(ADC1->ISR & ADC_ISR_ADRDY));	//and wait for it to be ready. (Can be handled by interrupt)
 	}
 }
 

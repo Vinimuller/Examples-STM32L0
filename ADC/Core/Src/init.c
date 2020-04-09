@@ -41,5 +41,5 @@ void ADC_Init (void)
 	while(ADC1->CR & ADC_CR_ADCAL);			//we have to wait until ADCAL = 0 (can be handled by interrupt)
 
 	ADC1->CR |= ADC_CR_ADEN;				//then we enable the ADC
-	while(!(ADC1->ISR & ADC_ISR_ADRDY));	//and wait for it to be ready. Can be handled by interrupt
+	while(!(ADC1->ISR & ADC_ISR_ADRDY));	//and wait for it to be ready. (Can be handled by interrupt)
 }
