@@ -14,18 +14,19 @@
 #include "struct.h"
 
 int	 ADC_Config (uint8_t Channel);
-void Wait	 (uint16_t);
+void Wait (uint16_t);
 
 int main (void)
 {
-	uint16_t	measure 	= 0,	//AD read after a conversion
-				v_ref 		= 0;	//internal reference voltage measured (after calculation)
-	int16_t		temperature	= 0;	//temperature in Celsius degrees measured (after calculation)
-
 	ADC_Init();
 
 	while(1)
 	{
+		//--- Nested variables' declaration
+		uint16_t	measure 	= 0,	//ADC data read is stored here after a conversion
+					v_ref 		= 0;	//internal reference voltage measured (after calculation)
+		int16_t		temperature	= 0;	//temperature in Celsius degrees measured (after calculation)
+
 		ADC_Config(CH_INT_TEMP);			//internal temperature reading
 		ADC1->CR |= ADC_CR_ADSTART;
 		while(!(ADC1->ISR & ADC_ISR_EOC));
@@ -43,7 +44,9 @@ int main (void)
 		measure = ADC1->DR;
 
 		//Vref calculation as in RM
-		v_ref = (3000 * (int32_t) (*VREFINT_CAL)) / measure;	//*3000 so we have Vref in mV
+		v_ref = (3 * (int32_t) (*VREFINT_CAL));
+		v_ref = (v_ref * 1000) / measure;		//*1000 so we have Vref in mV
+												//the internal reference voltage is now stored in v_ref
 
 		asm("nop");		//so we can hold the uC here after reading the temperature and Vref
 	}
