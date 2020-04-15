@@ -32,5 +32,7 @@
 //used for ADC_Config() channel select (switch/case)
 #define CH_INT_TEMP		0
 #define CH_V_REF		1
+//Actions
+#define DISABLE_ALL_CHANNELS()	(ADC1->CHSELR &= 0x0000)
 
 #endif /* INC_MACROS_H_ */

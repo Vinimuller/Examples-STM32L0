@@ -63,6 +63,7 @@ int ADC_Config (uint8_t Channel)
 	}
 	ADC1->CR |= ADC_CR_ADDIS;				//disables the ADC
 	while(ADC1->CR & ADC_CR_ADEN);
+	DISABLE_ALL_CHANNELS();					//and disables all channels
 
 	switch (Channel)
 	{
