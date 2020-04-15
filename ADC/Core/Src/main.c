@@ -13,12 +13,12 @@
 #include "init.h"
 #include "struct.h"
 
-int	 ADC_Config (uint8_t Channel);
-void Wait (uint16_t);
+int	 ADC_Config (uint8_t Channel);	//we call this function with the ADC channel we want to read
+void Wait (uint16_t);				//delay function, system clock based
 
 int main (void)
 {
-	ADC_Init();
+	ADC_Init();	//ADC initialization function
 
 	while(1)
 	{
@@ -27,26 +27,26 @@ int main (void)
 					v_ref 		= 0;	//internal reference voltage measured (after calculation)
 		int16_t		temperature	= 0;	//temperature in Celsius degrees measured (after calculation)
 
-		ADC_Config(CH_INT_TEMP);			//internal temperature reading
-		ADC1->CR |= ADC_CR_ADSTART;
-		while(!(ADC1->ISR & ADC_ISR_EOC));
-		measure = ADC1->DR;
+		ADC_Config(CH_INT_TEMP);			//configuring the ADC for internal temperature reading
+		ADC1->CR |= ADC_CR_ADSTART;			//starting the ADC
+		while(!(ADC1->ISR & ADC_ISR_EOC));	//and waiting for End Of Conversion flag to set
+		measure = ADC1->DR;					//storing the data read in measure
 
 		//temperature calculation as in RM example
 		temperature = ((measure * VDD_APPLI / VDD_CALIB) - (int32_t) *TEMP30_CAL_ADDR);
 		temperature = temperature * (int32_t)(130 - 30);
 		temperature = temperature / (int32_t)(*TEMP130_CAL_ADDR - *TEMP30_CAL_ADDR);
-		temperature = temperature + 30;			//the temperature read is now stored in temperature
+		temperature = temperature + 30;			//the calculated temperature is now stored in temperature
 
-		ADC_Config(CH_V_REF);				//internal reference voltage reading
-		ADC1->CR |= ADC_CR_ADSTART;
-		while(!(ADC1->ISR & ADC_ISR_EOC));
-		measure = ADC1->DR;
+		ADC_Config(CH_V_REF);				//configuring the ADC for internal reference voltage reading
+		ADC1->CR |= ADC_CR_ADSTART;			//starting the ADC
+		while(!(ADC1->ISR & ADC_ISR_EOC));	//and waiting for End Of Conversion flag to set
+		measure = ADC1->DR;					//storing the data read in measure
 
 		//Vref calculation as in RM
 		v_ref = (3 * (int32_t) (*VREFINT_CAL));
 		v_ref = (v_ref * 1000) / measure;		//*1000 so we have Vref in mV
-												//the internal reference voltage is now stored in v_ref
+												//the calculated internal reference voltage is now stored in v_ref
 
 		asm("nop");		//so we can hold the uC here after reading the temperature and Vref
 	}
@@ -58,8 +58,8 @@ int ADC_Config (uint8_t Channel)
 {
 	if(ADC1->CR & ADC_CR_ADSTART)			//we have to be sure there's no ongoing conversion
 	{
-		ADC1->CR |= ADC_CR_ADSTP;
-		while(ADC1->CR & ADC_CR_ADSTP);
+		ADC1->CR |= ADC_CR_ADSTP;			//if so, we have to set ADSTP bit
+		while(ADC1->CR & ADC_CR_ADSTP);		//and wait for it to clear
 	}
 	ADC1->CR |= ADC_CR_ADDIS;				//disables the ADC
 	while(ADC1->CR & ADC_CR_ADEN);
