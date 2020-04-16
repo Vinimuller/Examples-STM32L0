@@ -3,17 +3,108 @@
  * 	and internal temperature sensor (ADC_IN18).
  * 	The internal reference voltage must be in millivolts and the temperature in Celsius.
  *
- * 	1 - Polling		[/]
- * 	2 - Interrupt	[ ]
+ * 	1 - Polling		[X]
+ * 	2 - Interrupt	[/]
  * 	3 - DMA			[ ]
  */
 
 #include "stm32l053xx.h"
+#include "stm32l053xx.h"
+#include "macros.h"
+#include "init.h"
+#include "struct.h"
+
+uint8_t	flag_EOC = 0,	//flag for End Of Conversion (ADC converted one single channel)
+		flag_EOS = 0;	//flag for End Of conversion Sequence (ADC converted all channels enabled)
+
+int	 ADC_Config (uint8_t Channel);	//we call this function with the ADC channel we want to read
+void Wait (uint16_t);				//delay function, system clock based
 
 int main (void)
 {
+	ADC_Init();	//ADC initialization function
+
+	while(1)
+	{
+		//--- Nested variables' declaration
+		uint16_t	measure 	= 0,	//ADC data read is stored here after a conversion
+					v_ref 		= 0;	//internal reference voltage measured (after calculation)
+		int16_t		temperature	= 0;	//temperature in Celsius degrees measured (after calculation)
+
+//		ADC_Config(CH_V_REF);				//configuring the ADC for internal reference voltage reading
+//		ADC1->CR |= ADC_CR_ADSTART;			//starting the ADC
+//		while(!(ADC1->ISR & ADC_ISR_EOC));	//and waiting for End Of Conversion flag to set
+//		measure = ADC1->DR;					//storing the data read in measure
+//
+//		//Vref calculation as in RM
+//		v_ref = (3 * (int32_t) (*VREFINT_CAL));
+//		v_ref = (v_ref * 1000) / measure;		//*1000 so we have Vref in mV
+//												//the calculated internal reference voltage is now stored in v_ref
+
+		if((!flag_EOC) && ((!(ADC1->CR & ADC_CR_ADSTART)) || (!(ADC1->ISR & ADC_ISR_EOS))))	//if there was NOT an ADC interrupt and we haven't started it already
+		{
+			ADC_Config(CH_INT_TEMP);	//we'll configure the ADC for internal temperature reading
+			ADC1->CR |= ADC_CR_ADSTART;	//and start the ADC
+		}
+		else
+		{
+			if(flag_EOC)		//if THERE WAS an ADC interrupt
+			{
+				measure = ADC1->DR;		//we'll store the data read in measure
+
+				//temperature calculation as in RM example
+				temperature = ((measure * VDD_APPLI / VDD_CALIB) - (int32_t) *TEMP30_CAL_ADDR);
+				temperature = temperature * (int32_t)(130 - 30);
+				temperature = temperature / (int32_t)(*TEMP130_CAL_ADDR - *TEMP30_CAL_ADDR);
+				temperature = temperature + 30;			//the calculated temperature is now stored in temperature
+
+				flag_EOC = 0;			//and clear EOC flag
+			}
+		}
+
+		asm("nop");		//so we can hold the uC here after reading the temperature and Vref
+	}
 
 	return 0;
+}
+
+int ADC_Config (uint8_t Channel)
+{
+	if(ADC1->CR & ADC_CR_ADSTART)			//we have to be sure there's no ongoing conversion
+	{
+		ADC1->CR |= ADC_CR_ADSTP;			//if so, we have to set ADSTP bit
+		while(ADC1->CR & ADC_CR_ADSTP);		//and wait for it to clear
+	}
+	ADC1->CR |= ADC_CR_ADDIS;				//disables the ADC
+	while(ADC1->CR & ADC_CR_ADEN);
+	DISABLE_ALL_CHANNELS();					//and disables all channels
+
+	switch (Channel)
+	{
+		case CH_INT_TEMP:
+				ADC1->CHSELR |= ADC_CHSELR_CHSEL18;		//selecting the TSEN channel
+				ADC->CCR |= ADC_CCR_TSEN; 				//enables temperature sensor
+				Wait(TIME_10uSEC);						//we have to wait for the proper time for the Tsense to wake up
+		break;
+		case CH_V_REF:
+				ADC1->CHSELR |= ADC_CHSELR_CHSEL17;		//selecting the VREF channel
+				ADC->CCR |= ADC_CCR_VREFEN; 			//enables internal reference voltage
+		break;
+		default:
+				return (ADC_ERROR);	//ADC error
+		break;
+	}
+
+	ADC1->ISR|= ADC_ISR_ADRDY;				//clear the ADRDY bit by programming it to 1
+	ADC1->CR |= ADC_CR_ADEN;				//then we enable the ADC
+	while(!(ADC1->ISR & ADC_ISR_ADRDY));	//and wait for it to be ready. (Can be handled by interrupt)
+
+	return 0;
+}
+
+void Wait (uint16_t time)
+{
+	while(time--);
 }
 
 /*

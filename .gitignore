@@ -75,3 +75,4 @@ STM32L0xx_HAL_Driver/
 
 #ignore all .ioc files
 *.ioc
+ADC_irq/ADC_irq Debug.launch

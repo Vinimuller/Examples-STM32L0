@@ -13,8 +13,8 @@
 #include "init.h"
 #include "struct.h"
 
-int	 ADC_Config (uint8_t Channel);	//we call this function with the ADC channel we want to read
-void Wait (uint16_t);				//delay function, system clock based
+App_Errors	ADC_Config (uint8_t Channel);	//we call this function with the ADC channel we want to read
+void 		Wait (uint16_t);				//delay function, system clock based
 
 int main (void)
 {
@@ -54,7 +54,7 @@ int main (void)
 	return 0;
 }
 
-int ADC_Config (uint8_t Channel)
+App_Errors ADC_Config (uint8_t Channel)
 {
 	if(ADC1->CR & ADC_CR_ADSTART)			//we have to be sure there's no ongoing conversion
 	{
