@@ -13,10 +13,10 @@
 #include "init.h"
 #include "struct.h"
 
-ADC_Status	ADC_Config (uint32_t Channel);	//we call this function with the ADC channel we want to read
-void 		Wait (uint16_t);				//delay function, system clock based
+ADC_Status	ADC_Config(uint32_t Channel);	//we call this function with the ADC channel we want to read
+void 		wait(uint16_t);				//delay function, system clock based
 
-int main (void)
+int main(void)
 {
 	uint16_t	measure 	= 0,	//ADC data read is stored here after a conversion
 				v_ref 		= 0;	//internal reference voltage measured (after calculation)
@@ -53,7 +53,7 @@ int main (void)
 	return 0;
 }
 
-ADC_Status ADC_Config (uint32_t Channel)
+ADC_Status ADC_Config(uint32_t Channel)
 {
 	if(ADC1->CR & ADC_CR_ADSTART)			//we have to be sure there's no ongoing conversion
 	{
@@ -69,7 +69,7 @@ ADC_Status ADC_Config (uint32_t Channel)
 		case ADC_CHSELR_CHSEL18:
 				ADC1->CHSELR |= ADC_CHSELR_CHSEL18;		//selecting the TSEN channel
 				ADC->CCR |= ADC_CCR_TSEN; 				//enables temperature sensor
-				Wait(TIME_10uSEC);						//we have to wait for the proper time for the Tsense to wake up
+				wait(TIME_10uSEC);						//we have to wait for the proper time for the Tsense to wake up
 		break;
 		case ADC_CHSELR_CHSEL17:
 				ADC1->CHSELR |= ADC_CHSELR_CHSEL17;		//selecting the VREF channel
@@ -86,7 +86,7 @@ ADC_Status ADC_Config (uint32_t Channel)
 	return 0;
 }
 
-void Wait (uint16_t time)
+void wait(uint16_t time)
 {
 	while(time--);
 }
