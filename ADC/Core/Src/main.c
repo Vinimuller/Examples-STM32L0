@@ -18,15 +18,14 @@ void 		Wait (uint16_t);				//delay function, system clock based
 
 int main (void)
 {
+	uint16_t	measure 	= 0,	//ADC data read is stored here after a conversion
+				v_ref 		= 0;	//internal reference voltage measured (after calculation)
+	int16_t		temperature	= 0;	//temperature in Celsius degrees measured (after calculation)
+
 	ADC_Init();	//ADC initialization function
 
 	while(1)
 	{
-		//--- Nested variables' declaration
-		uint16_t	measure 	= 0,	//ADC data read is stored here after a conversion
-					v_ref 		= 0;	//internal reference voltage measured (after calculation)
-		int16_t		temperature	= 0;	//temperature in Celsius degrees measured (after calculation)
-
 		ADC_Config(ADC_CHSELR_CHSEL18);		//configuring the ADC for internal temperature reading
 		ADC1->CR |= ADC_CR_ADSTART;			//starting the ADC
 		while(!(ADC1->ISR & ADC_ISR_EOC));	//and waiting for End Of Conversion flag to set
