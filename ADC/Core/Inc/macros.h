@@ -27,9 +27,4 @@
  */
 #define TIME_10uSEC		21	//21 system clock cycles to wait for 10uS - time for the temperature sensor to wake up
 
-//--- GENERAL DEFINES
-//- ADC management
-//Actions
-#define DISABLE_ALL_CHANNELS()	(ADC1->CHSELR &= 0x0000)
-
 #endif /* INC_MACROS_H_ */
