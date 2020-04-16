@@ -25,7 +25,7 @@ void ADC_Init (void)
 	NVIC_EnableIRQ(ADC1_COMP_IRQn);
 	NVIC_SetPriority(ADC1_COMP_IRQn, 0);
 
-//	ADC1->ISR|= ADC_ISR_ADRDY;				//clear the ADRDY bit by programming it to 1
-//	ADC1->CR |= ADC_CR_ADEN;				//then we enable the ADC
-//	while(!(ADC1->ISR & ADC_ISR_ADRDY));	//and wait for it to be ready (Can be handled by interrupt)
+	ADC1->ISR|= ADC_ISR_ADRDY;				//clear the ADRDY bit by programming it to 1
+	ADC1->CR |= ADC_CR_ADEN;				//then we enable the ADC
+	while(!(ADC1->ISR & ADC_ISR_ADRDY));	//and wait for it to be ready (Can be handled by interrupt)
 }
