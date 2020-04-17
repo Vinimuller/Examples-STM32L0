@@ -14,12 +14,13 @@ void ADC1_COMP_IRQHandler(void)
 	{
 		flag_EOC = 1;					//sets flag_EOC
 		//EOC flag is cleared by reading the ADC_DR register
-		//ADC1->ISR &= ~ADC_ISR_EOC;		//clears EOC interrupt flag
+		ADC1->ISR |= ADC_ISR_EOC;		//clears EOC interrupt flag by writing 1 to it
 	}
 
-//	if(ADC1->ISR & ADC_ISR_EOS)		//if there was and End Of Sequence
+//	if(ADC1->ISR & ADC_ISR_EOSEQ)		//if there was and End Of Sequence
 //	{
-//
+//		flag_EOC = 1;					//sets flag_EOC
+//		ADC1->ISR |= ADC_ISR_EOSEQ;		//clears EOS interrupt flag by writing 1 to it
 //	}
 }
 
