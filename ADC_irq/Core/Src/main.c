@@ -22,8 +22,8 @@ void 		wait(uint16_t);					//delay function, system clock based
 
 int main(void)
 {
-	uint16_t	measure 	= 0,	//ADC data read is stored here after a conversion
-				v_ref 		= 0;	//internal reference voltage measured (after calculation)
+	uint16_t	measure 	= 0;//,	//ADC data read is stored here after a conversion
+				//v_ref 		= 0;	//internal reference voltage measured (after calculation)
 	int16_t		temperature	= 0;	//temperature in Celsius degrees measured (after calculation)
 
 	ADC_Init();	//ADC initialization function
@@ -40,10 +40,10 @@ int main(void)
 //		v_ref = (v_ref * 1000) / measure;		//*1000 so we have Vref in mV
 //												//the calculated internal reference voltage is now stored in v_ref
 
-		if((!flag_EOC) && ((!(ADC1->CR & ADC_CR_ADSTART)) || (!(ADC1->ISR & ADC_ISR_EOS))))	//if there was NOT an ADC interrupt and we haven't started it already
+		if((!flag_EOC) && (!(ADC1->CR & ADC_CR_ADSTART)) && (!(ADC1->ISR & ADC_ISR_EOSEQ)))	//if there was NOT an ADC interrupt and we haven't started it already
 		{
 			ADC_Config(ADC_CHSELR_CHSEL18);	//we'll configure the ADC for internal temperature reading
-			ADC1->CR |= ADC_CR_ADSTART;	//and start the ADC
+			ADC1->CR |= ADC_CR_ADSTART;		//and start the ADC
 		}
 		else
 		{
