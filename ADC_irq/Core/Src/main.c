@@ -76,17 +76,16 @@ ADC_Status ADC_Config(uint32_t Channel)
 	}
 	ADC1->CR |= ADC_CR_ADDIS;				//disables the ADC
 	while(ADC1->CR & ADC_CR_ADEN);
-	DISABLE_ALL_CHANNELS();					//and disables all channels
 
 	switch (Channel)
 	{
 		case ADC_CHSELR_CHSEL18:
-				ADC1->CHSELR |= ADC_CHSELR_CHSEL18;		//selecting the TSEN channel
+				ADC1->CHSELR = ADC_CHSELR_CHSEL18;		//selecting the TSEN channel
 				ADC->CCR |= ADC_CCR_TSEN; 				//enables temperature sensor
 				wait(TIME_10uSEC);						//we have to wait for the proper time for the Tsense to wake up
 		break;
 		case ADC_CHSELR_CHSEL17:
-				ADC1->CHSELR |= ADC_CHSELR_CHSEL17;		//selecting the VREF channel
+				ADC1->CHSELR = ADC_CHSELR_CHSEL17;		//selecting the VREF channel
 				ADC->CCR |= ADC_CCR_VREFEN; 			//enables internal reference voltage
 		break;
 		default:
