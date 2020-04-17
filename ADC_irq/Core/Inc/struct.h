@@ -9,7 +9,8 @@
 #define INC_STRUCT_H_
 
 typedef enum {
-	ADC_ERROR	= -1
+	ADC_CFG_ERROR	= -1,
+	ADC_READ_ERROR	= -2
 }ADC_Status;	//error flags for application management
 
 #endif /* INC_STRUCT_H_ */
