@@ -8,7 +8,7 @@
 
 extern uint8_t flag_EOC;	//flag for End Of Conversion (ADC converted one single channel)
 
-void ADC1_COMP_IRQHandler (void)
+void ADC1_COMP_IRQHandler(void)
 {
 	if(ADC1->ISR & ADC_ISR_EOC)			//if there was and End Of Conversion
 	{

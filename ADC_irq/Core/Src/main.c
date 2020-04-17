@@ -17,10 +17,10 @@
 uint8_t	flag_EOC = 0,	//flag for End Of Conversion (ADC converted one single channel)
 		flag_EOS = 0;	//flag for End Of conversion Sequence (ADC converted all channels enabled)
 
-int	 ADC_Config (uint8_t Channel);	//we call this function with the ADC channel we want to read
-void Wait (uint16_t);				//delay function, system clock based
+ADC_Status	ADC_Config(uint32_t Channel);	//we call this function with the ADC channel we want to read
+void 		wait(uint16_t);					//delay function, system clock based
 
-int main (void)
+int main(void)
 {
 	ADC_Init();	//ADC initialization function
 
@@ -68,7 +68,7 @@ int main (void)
 	return 0;
 }
 
-int ADC_Config (uint8_t Channel)
+ADC_Status ADC_Config(uint32_t Channel)
 {
 	if(ADC1->CR & ADC_CR_ADSTART)			//we have to be sure there's no ongoing conversion
 	{
@@ -84,7 +84,7 @@ int ADC_Config (uint8_t Channel)
 		case CH_INT_TEMP:
 				ADC1->CHSELR |= ADC_CHSELR_CHSEL18;		//selecting the TSEN channel
 				ADC->CCR |= ADC_CCR_TSEN; 				//enables temperature sensor
-				Wait(TIME_10uSEC);						//we have to wait for the proper time for the Tsense to wake up
+				wait(TIME_10uSEC);						//we have to wait for the proper time for the Tsense to wake up
 		break;
 		case CH_V_REF:
 				ADC1->CHSELR |= ADC_CHSELR_CHSEL17;		//selecting the VREF channel
@@ -102,7 +102,7 @@ int ADC_Config (uint8_t Channel)
 	return 0;
 }
 
-void Wait (uint16_t time)
+void wait(uint16_t time)
 {
 	while(time--);
 }

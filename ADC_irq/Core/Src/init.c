@@ -6,7 +6,7 @@
  */
 #include "stm32l053xx.h"
 
-void ADC_Init (void)
+void ADC_Init(void)
 {
 	//--- Initialization procedure
 	RCC->APB2ENR 	|= 	RCC_APB2ENR_ADC1EN;		//enables ADC clock
