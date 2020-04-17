@@ -28,10 +28,6 @@
 #define TIME_10uSEC		21	//21 system clock cycles to wait for 10uS - time for the temperature sensor to wake up
 
 //--- General defines
-//	ADC management
-//used for ADC_Config() channel select (switch/case)
-#define CH_INT_TEMP		0
-#define CH_V_REF		1
 //Actions
 #define DISABLE_ALL_CHANNELS()	(ADC1->CHSELR &= 0x0000)
 
