@@ -51,12 +51,27 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-Basic_blink/Core/.DS_Store
+#Basic_blink/Core/.DS_Store
 
-Basic_blink/.DS_Store
+#Basic_blink/.DS_Store
 
 .DS_Store
 
-EXTI/.settings/language.settings.xml
+#EXTI/.settings/language.settings.xml
 
-EXTI/Debug/
+#EXTI/Debug/
+
+#ADC/Debug/
+
+#ignore all files in any directory named Debug
+Debug/
+
+#ignore all files in any directory named STM32L0xx_HAL_Driver
+
+STM32L0xx_HAL_Driver/
+
+#ignore all files in any directory named .settings
+.settings/
+
+#ignore all .ioc files
+*.ioc
