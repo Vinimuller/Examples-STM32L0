@@ -15,6 +15,7 @@ void ADC_Init(void)
 	ADC->CCR 		|= 	ADC_CCR_LFMEN;			//low frequency mode enable
 	ADC1->SMPR 		|= 	ADC_SMPR_SMPR_1	|		//sets sample time for 12.5 ADC clock cycles
 						ADC_SMPR_SMPR_0	;		//because we need 10.5 ADC clock cycles at least
+	ADC1->CFGR1		|=	ADC_CFGR1_WAIT;			//enables wait mode to prevent overrun
 
 	ADC1->CR |= ADC_CR_ADCAL;					//starting the calibration
 	while(ADC1->CR & ADC_CR_ADCAL);				//we have to wait until ADCAL = 0 (Can be handled by interrupt)
