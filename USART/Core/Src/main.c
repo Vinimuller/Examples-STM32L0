@@ -2,9 +2,14 @@
 #include "stdio.h"
 #include "stdarg.h"
 
+int serial_printf(const char *format, ...);
+int serial_write(int file, char ptr, int len);
+int __io_putchar(int ch);
+
+char data = 0;	//data read via USART
+
 int main(void)
 {
-	char data = 0;	//data read via USART
 
 	//--- ENABLING GPIOB 6 AND 7 AS USART1 RX AND TX
 	/*GPIOB
@@ -31,15 +36,47 @@ int main(void)
 		data = USART1->RDR;						//and store it in data
 
 		//--- USART1 TX
-		USART1->TDR = data + 1;					//then we send a message as a response
-		while(!(USART1->ISR & USART_ISR_TC));	//and wait for TC flag to set, knowing that all the data was sent
+//		USART1->TDR = data + 1;					//then we send a message as a response
+//		while(!(USART1->ISR & USART_ISR_TC));	//and wait for TC flag to set, knowing that all the data was sent
 
-	//	printf("data: %c", data);	//that's for later
+		serial_write(0, (data+1), 20);	//that's for later
+		//printf("data: %d", data);
 
 		asm("nop");	//so we can stop the program here
 	}
 
 	return 0;
+}
+
+int serial_write(int file, char ptr, int len)
+{
+	int DataIdx;
+
+	for (DataIdx = 0; DataIdx < len; DataIdx++)
+	{
+		__io_putchar(ptr++);
+	}
+	return len;
+}
+
+int __io_putchar(int ch)
+{
+	USART1->TDR = ch;
+	while(!(USART1->ISR & USART_ISR_TC));
+
+	return 0;
+}
+
+int serial_printf(const char *format, ...)
+{
+	va_list arg;
+	int done;
+
+	va_start (arg, format);
+	done = vfprintf (stdout, format, arg);
+	va_end (arg);
+
+	return done;
 }
 
 /*
