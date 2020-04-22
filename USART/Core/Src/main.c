@@ -3,7 +3,7 @@
 #include "stdarg.h"
 
 int serial_printf(const char *format, ...);
-int serial_write(int file, char ptr, int len);
+int serial_write(char ptr, int len);
 int __io_putchar(int ch);
 
 char data = 0;	//data read via USART
@@ -35,11 +35,7 @@ int main(void)
 		while(!(USART1->ISR & USART_ISR_RXNE));	//we wait to receive a information
 		data = USART1->RDR;						//and store it in data
 
-		//--- USART1 TX
-//		USART1->TDR = data + 1;					//then we send a message as a response
-//		while(!(USART1->ISR & USART_ISR_TC));	//and wait for TC flag to set, knowing that all the data was sent
-
-		serial_write(0, (data+1), 20);	//that's for later
+		serial_write((data+1), 1);
 		//printf("data: %d", data);
 
 		asm("nop");	//so we can stop the program here
@@ -48,7 +44,7 @@ int main(void)
 	return 0;
 }
 
-int serial_write(int file, char ptr, int len)
+int serial_write(char ptr, int len)
 {
 	int DataIdx;
 
