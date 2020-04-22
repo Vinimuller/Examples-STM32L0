@@ -1,0 +1,70 @@
+# Prerequisites
+*.d
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+
+#ignore .DS_Store files (Finder files)
+.DS_Store
+
+#ignore all files in any directory named Debug
+Debug/
+
+#ignore all files in any directory named STM32L0xx_HAL_Driver
+STM32L0xx_HAL_Driver/
+
+#ignore all files in any directory named .settings
+.settings/
+
+#ignore all .ioc files
+*.ioc
+
+#ignore all .launch files
+*.launch
