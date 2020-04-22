@@ -4,7 +4,7 @@
 
 int main(void)
 {
-	char data = 0;
+	char data = 0;	//data read via USART
 
 	//--- ENABLING GPIOB 6 AND 7 AND USART1 RX AND TX
 	/*GPIOB
@@ -25,16 +25,16 @@ int main(void)
 					USART_CR1_RE;	//enables RX
 
 	//--- USART1 RX
-	while(!(USART1->ISR & USART_ISR_RXNE));
-	data = USART1->RDR;
+	while(!(USART1->ISR & USART_ISR_RXNE));	//we wait to receive a information
+	data = USART1->RDR;						//and store it in data
 
 	//--- USART1 TX
-	USART1->TDR = 97;	//sends 97 'a'
-	while(!(USART1->ISR & USART_ISR_TC));
+	USART1->TDR = 97;	//sends 97 'a'		//then we send a message as a response
+	while(!(USART1->ISR & USART_ISR_TC));	//and wait for TC flag to set, knowing that all the data was sent
 
-	printf("data: %c", data);
+//	printf("data: %c", data);	//that's for later
 
-	asm("nop");
+	asm("nop");	//so we can stop the program here
 
 	return 0;
 }
