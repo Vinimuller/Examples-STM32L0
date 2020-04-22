@@ -24,17 +24,20 @@ int main(void)
 					USART_CR1_TE |	//enables TX
 					USART_CR1_RE;	//enables RX
 
-	//--- USART1 RX
-	while(!(USART1->ISR & USART_ISR_RXNE));	//we wait to receive a information
-	data = USART1->RDR;						//and store it in data
+	while(1)
+	{
+		//--- USART1 RX
+		while(!(USART1->ISR & USART_ISR_RXNE));	//we wait to receive a information
+		data = USART1->RDR;						//and store it in data
 
-	//--- USART1 TX
-	USART1->TDR = 97;	//sends 97 'a'		//then we send a message as a response
-	while(!(USART1->ISR & USART_ISR_TC));	//and wait for TC flag to set, knowing that all the data was sent
+		//--- USART1 TX
+		USART1->TDR = data + 1;					//then we send a message as a response
+		while(!(USART1->ISR & USART_ISR_TC));	//and wait for TC flag to set, knowing that all the data was sent
 
-//	printf("data: %c", data);	//that's for later
+	//	printf("data: %c", data);	//that's for later
 
-	asm("nop");	//so we can stop the program here
+		asm("nop");	//so we can stop the program here
+	}
 
 	return 0;
 }
