@@ -92,10 +92,12 @@ int main(void)
 			{
 				case ADC_CHSELR_CHSEL17:				//Internal reference voltage
 						v_ref = ADC1->DR;				//storing the data read in v_ref
+
+						//configuring the next channel to be read
 						ADC1->CHSELR = ADC_CHSELR_CHSEL18;
-						ADC->CCR |= ADC_CCR_TSEN; 		//enables temperature sensor
+						ADC->CCR 	|= ADC_CCR_TSEN; 	//enables temperature sensor
 						wait(TIME_10uSEC);				//we have to wait for the proper time for the Tsense to wake up
-						ADC1->CR |= ADC_CR_ADSTART;
+						ADC1->CR 	|= ADC_CR_ADSTART;	//starts the ADC
 				break;
 				case ADC_CHSELR_CHSEL18:				//Internal temperature
 						temperature = ADC1->DR;			//we'll store the data read in temperature
