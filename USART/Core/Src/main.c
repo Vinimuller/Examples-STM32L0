@@ -47,7 +47,7 @@ int main(void)
 
 void vprint(const char *fmt, va_list argp)
 {
-    char string[200];
+    char string[strlen(fmt)];
     int i = 0;
 
     if(0 < vsprintf(string,fmt,argp)) // build string
