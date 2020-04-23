@@ -13,7 +13,6 @@ char data = 0;	//data read via USART
 
 int main(void)
 {
-
 	//--- ENABLING GPIOB 6 AND 7 AS USART1 RX AND TX
 	/*GPIOB
 	 * PB7	-> Alternate function (USART1 RX)	| Low speed
