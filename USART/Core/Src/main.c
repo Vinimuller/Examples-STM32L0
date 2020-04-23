@@ -34,7 +34,7 @@ int main(void)
 		data = USART1->RDR;						//store it in data
 
 		//and send back what we've received and the next letter in the alphabet
-		printf("Data received: %c\n\rNext letter in the alphabet: %c\n\n\r", data, (data+1));
+		printf("Data received: %c\r\nNext letter in the alphabet: %c\r\n\n", data, (data+1));
 	}
 
 	return 0;
