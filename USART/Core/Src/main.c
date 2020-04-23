@@ -37,7 +37,8 @@ int main(void)
 		while(!(USART1->ISR & USART_ISR_RXNE));	//we wait to receive a information
 		data = USART1->RDR;						//and store it in data
 
-		serial_printf("Data received: %c\n\rNext letter on the alphabet: %c\n\n\r", data, (data+1));
+		//serial_printf("Data received: %c\n\rNext letter on the alphabet: %c\n\n\r", data, (data+1));
+		printf("Data received: %c\n\rNext letter on the alphabet: %c\n\n\r", data, (data+1));
 
 		asm("nop");	//so we can stop the program here
 	}
@@ -76,17 +77,17 @@ void serial_printf(const char *fmt, ...) // custom printf() function
 //	return ch;
 //}
 
-//int _write(int file, char *ptr, int len)
-//{
-//	int DataIdx;
-//
-//	for (DataIdx = 0; DataIdx < len; DataIdx++)
-//	{
-//		USART1->TDR = (*ptr++);
-//		while(!(USART1->ISR & USART_ISR_TC));
-//	}
-//	return len;
-//}
+int _write(int file, char *ptr, int len)
+{
+	int DataIdx;
+
+	for (DataIdx = 0; DataIdx < len; DataIdx++)
+	{
+		USART1->TDR = (*ptr++);
+		while(!(USART1->ISR & USART_ISR_TC));
+	}
+	return len;
+}
 
 //int __io_putchar(int ch)
 //{
