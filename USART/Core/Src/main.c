@@ -3,17 +3,11 @@
 #include "stdarg.h"
 #include "string.h"
 
-//#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-
-//int __io_putchar(int ch);
-void vprint(const char *fmt, va_list argp);
-void serial_printf(const char *fmt, ...);
-
-char data = 0;	//data read via USART
+char data = 0;	//data received via USART
 
 int main(void)
 {
-	//--- ENABLING GPIOB 6 AND 7 AS USART1 RX AND TX
+	//--- ENABLING GPIOB 7 AND 6 AS USART1 RX AND TX
 	/*GPIOB
 	 * PB7	-> Alternate function (USART1 RX)	| Low speed
 	 * PB6	-> Alternate function (USART1 TX)	| Low speed
@@ -35,67 +29,27 @@ int main(void)
 	{
 		//--- USART1 RX
 		while(!(USART1->ISR & USART_ISR_RXNE));	//we wait to receive a information
-		data = USART1->RDR;						//and store it in data
+		data = USART1->RDR;						//store it in data
 
-		//serial_printf("Data received: %c\n\rNext letter on the alphabet: %c\n\n\r", data, (data+1));
-		printf("Data received: %c\n\rNext letter on the alphabet: %c\n\n\r", data, (data+1));
-
-		asm("nop");	//so we can stop the program here
+		//and send back what we've received and the next letter in the alphabet
+		printf("Data received: %c\n\rNext letter in the alphabet: %c\n\n\r", data, (data+1));
 	}
 
 	return 0;
 }
 
-void vprint(const char *fmt, va_list argp)
-{
-    char string[strlen(fmt)];
-    int i = 0;
-
-    if(0 < vsprintf(string,fmt,argp)) // build string
-    {
-    	for(i=0; i< strlen(string); i++)
-    	{
-			USART1->TDR = string[i];
-			while(!(USART1->ISR & USART_ISR_TC));
-    	}
-    }
-}
-
-void serial_printf(const char *fmt, ...) // custom printf() function
-{
-    va_list argp;
-    va_start(argp, fmt);
-    vprint(fmt, argp);
-    va_end(argp);
-}
-
-//PUTCHAR_PROTOTYPE
-//{
-//	USART1->TDR = ch;
-//	while(!(USART1->ISR & USART_ISR_TC));
-//
-//	return ch;
-//}
-
+//restructured _write() ((weak)) function using USART instead of __io_putchar() (see syscalls.c)
 int _write(int file, char *ptr, int len)
 {
 	int DataIdx;
 
-	for (DataIdx = 0; DataIdx < len; DataIdx++)
+	for (DataIdx = 0; DataIdx < len; DataIdx++)		//loop where we send each character via USART
 	{
 		USART1->TDR = (*ptr++);
 		while(!(USART1->ISR & USART_ISR_TC));
 	}
 	return len;
 }
-
-//int __io_putchar(int ch)
-//{
-//	USART1->TDR = ch;
-//	while(!(USART1->ISR & USART_ISR_TC));
-//
-//	return 0;
-//}
 
 /*
  * --> CHARACTER TRANSMISSION PROCEDURE <--
