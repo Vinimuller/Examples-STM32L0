@@ -10,27 +10,81 @@
 
 #include "stm32l053xx.h"
 #include "macros.h"
-#include "init.h"
 #include "struct.h"
-
-uint8_t	flag_EOC = 0;	//flag for End Of Conversion (ADC converted one single channel)
 
 ADC_Status	ADC_Config(uint32_t Channel);	//we call this function with the ADC channel we want to read
 void 		wait(uint16_t time);			//delay function, system clock based
+
+uint8_t	flag_EOC = 0;						//flag for End Of Conversion (ADC converted one single channel)
+
+void ADC1_COMP_IRQHandler(void)
+{
+	if(ADC1->ISR & ADC_ISR_EOC)			//if there was and End Of Conversion
+	{
+		flag_EOC = 1;					//sets flag_EOC
+		ADC1->ISR |= ADC_ISR_EOC;		//clears EOC interrupt flag by writing 1 to it
+
+		if(ADC1->ISR & ADC_ISR_OVR)
+		{
+			while(1);	//so we can hold the program at fault
+		}
+	}
+}
 
 int main(void)
 {
 	uint16_t	v_ref 		= 0;	//internal reference voltage measured (after calculation)
 	int16_t		temperature	= 0;	//temperature in Celsius degrees measured (after calculation)
 
-	ADC_Init();	//ADC initialization function
+	/*										*
+	 * --- ADC INITIALIZATION PROCEDURE --- *
+	 *										*/
+	RCC->APB2ENR 	|= 	RCC_APB2ENR_ADC1EN;		//enables ADC clock
+	ADC1->CR 		|=	ADC_CR_ADVREGEN;		//enables the voltage regulator
+	ADC1->CFGR2 	|= 	ADC_CFGR2_CKMODE_0;		//sets ADC clock as PCLK/2
+	ADC->CCR 		|= 	ADC_CCR_LFMEN;			//low frequency mode enable
+	ADC1->SMPR 		|= 	ADC_SMPR_SMPR_1	|		//sets sample time for 12.5 ADC clock cycles
+						ADC_SMPR_SMPR_0	;		//because we need 10.5 ADC clock cycles at least
+	ADC1->CFGR1		|=	ADC_CFGR1_WAIT;			//enables wait mode to prevent overrun
 
-	ADC_Config(ADC_CHSELR_CHSEL17);	//we'll configure the ADC for internal temperature reading first
-	ADC1->CR |= ADC_CR_ADSTART;		//and start the ADC
+	ADC1->CR |= ADC_CR_ADCAL;					//starting the calibration
+	while(ADC1->CR & ADC_CR_ADCAL);				//we have to wait until ADCAL = 0 (Can be handled by interrupt)
+
+	ADC1->IER		|=	ADC_IER_EOCIE;			//enables End Of Conversion interrupt
+
+	//Enables IRQ and IRQ priority
+	NVIC_EnableIRQ(ADC1_COMP_IRQn);
+	NVIC_SetPriority(ADC1_COMP_IRQn, 0);
+
+	ADC1->ISR|= ADC_ISR_ADRDY;					//clear the ADRDY bit by programming it to 1
+	ADC1->CR |= ADC_CR_ADEN;					//then we enable the ADC
+	while(!(ADC1->ISR & ADC_ISR_ADRDY));		//and wait for it to be ready (Can be handled by interrupt)
+
+	/*												*
+	 * --- ADC CHANNEL CONFIG FOR V_REF READING --- *
+	 *												*/
+	if(ADC1->CR & ADC_CR_ADSTART)			//we have to be sure there's no ongoing conversion
+	{
+		ADC1->CR |= ADC_CR_ADSTP;			//if so, we have to set ADSTP bit
+		while(ADC1->CR & ADC_CR_ADSTP);		//and wait for it to clear
+	}
+	ADC1->CR |= ADC_CR_ADDIS;				//disables the ADC
+	while(ADC1->CR & ADC_CR_ADEN);
+
+	ADC1->CHSELR = ADC_CHSELR_CHSEL17;		//selecting the VREF channel
+	ADC->CCR |= ADC_CCR_VREFEN; 			//enables internal reference voltage
+
+	ADC1->CR |= ADC_CR_ADEN;				//then we enable the ADC
+	while(!(ADC1->ISR & ADC_ISR_ADRDY));	//and wait for it to be ready. (Can be handled by interrupt)
+
+	/*									*
+	 * --- STARTING THE ADC READING --- *
+	 *									*/
+	ADC1->CR |= ADC_CR_ADSTART;				//starts the ADC
 
 	while(1)
 	{
-		if(flag_EOC)		//if THERE WAS an ADC interrupt
+		if(flag_EOC)									//if THERE WAS an ADC interrupt
 		{
 			flag_EOC = 0;
 
@@ -38,7 +92,10 @@ int main(void)
 			{
 				case ADC_CHSELR_CHSEL17:				//Internal reference voltage
 						v_ref = ADC1->DR;				//storing the data read in v_ref
-						ADC_Config(ADC_CHSELR_CHSEL18);	//config the ADC for the next reading
+						ADC1->CHSELR = ADC_CHSELR_CHSEL18;
+						ADC->CCR |= ADC_CCR_TSEN; 		//enables temperature sensor
+						wait(TIME_10uSEC);				//we have to wait for the proper time for the Tsense to wake up
+						ADC1->CR |= ADC_CR_ADSTART;
 				break;
 				case ADC_CHSELR_CHSEL18:				//Internal temperature
 						temperature = ADC1->DR;			//we'll store the data read in temperature
@@ -48,9 +105,9 @@ int main(void)
 				break;
 			}
 
-			if(ADC1->CHSELR & ADC_CHSELR_CHSEL18)	//if we've finished reading all channels (could be done with a #define)
-			{										//we're going to calculate what we need
-				uint16_t aux = v_ref;
+			if(ADC1->CHSELR & ADC_CHSELR_CHSEL18)		//if we've finished reading all channels (could be done with a #define)
+			{											//we're going to calculate what we need
+				uint16_t aux = v_ref;					//we only use aux to calculate v_ref
 
 				//Vref calculation as in RM
 				v_ref = (3 * (int32_t) (*VREFINT_CAL));
@@ -68,38 +125,6 @@ int main(void)
 
 		}
 	}
-
-	return 0;
-}
-
-ADC_Status ADC_Config (uint32_t Channel)
-{
-	if(ADC1->CR & ADC_CR_ADSTART)			//we have to be sure there's no ongoing conversion
-	{
-		ADC1->CR |= ADC_CR_ADSTP;			//if so, we have to set ADSTP bit
-		while(ADC1->CR & ADC_CR_ADSTP);		//and wait for it to clear
-	}
-	ADC1->CR |= ADC_CR_ADDIS;				//disables the ADC
-	while(ADC1->CR & ADC_CR_ADEN);
-
-	switch (Channel)
-	{
-		case ADC_CHSELR_CHSEL18:
-				ADC1->CHSELR = ADC_CHSELR_CHSEL18;		//selecting the TSEN channel
-				ADC->CCR |= ADC_CCR_TSEN; 				//enables temperature sensor
-				wait(TIME_10uSEC);						//we have to wait for the proper time for the Tsense to wake up
-		break;
-		case ADC_CHSELR_CHSEL17:
-				ADC1->CHSELR = ADC_CHSELR_CHSEL17;		//selecting the VREF channel
-				ADC->CCR |= ADC_CCR_VREFEN; 			//enables internal reference voltage
-		break;
-		default:
-				return (ADC_CFG_ERROR);	//ADC error
-		break;
-	}
-
-	ADC1->CR |= ADC_CR_ADEN;				//then we enable the ADC
-	while(!(ADC1->ISR & ADC_ISR_ADRDY));	//and wait for it to be ready. (Can be handled by interrupt)
 
 	return 0;
 }
