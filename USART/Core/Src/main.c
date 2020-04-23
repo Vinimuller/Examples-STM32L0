@@ -3,6 +3,8 @@
 #include "stdarg.h"
 #include "string.h"
 
+void __io_putchar(int ch);
+
 char data = 0;	//data received via USART
 
 int main(void)
@@ -38,18 +40,24 @@ int main(void)
 	return 0;
 }
 
-//restructured _write() ((weak)) function using USART instead of __io_putchar() (see syscalls.c)
-int _write(int file, char *ptr, int len)
+void __io_putchar(int ch)
 {
-	int DataIdx;
-
-	for (DataIdx = 0; DataIdx < len; DataIdx++)		//loop where we send each character via USART
-	{
-		USART1->TDR = (*ptr++);
-		while(!(USART1->ISR & USART_ISR_TC));
-	}
-	return len;
+	USART1->TDR = ch;
+	while(!(USART1->ISR & USART_ISR_TC));
 }
+
+////restructured _write() ((weak)) function using USART instead of __io_putchar() (see syscalls.c)
+//int _write(int file, char *ptr, int len)
+//{
+//	int DataIdx;
+//
+//	for (DataIdx = 0; DataIdx < len; DataIdx++)		//loop where we send each character via USART
+//	{
+//		USART1->TDR = (*ptr++);
+//		while(!(USART1->ISR & USART_ISR_TC));
+//	}
+//	return len;
+//}
 
 /*
  * --> CHARACTER TRANSMISSION PROCEDURE <--
