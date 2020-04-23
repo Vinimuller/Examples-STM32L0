@@ -13,8 +13,7 @@
 #include "init.h"
 #include "struct.h"
 
-uint8_t	flag_EOC = 0,	//flag for End Of Conversion (ADC converted one single channel)
-		flag_EOS = 0;	//flag for End Of conversion Sequence (ADC converted all channels enabled)
+uint8_t	flag_EOC = 0;	//flag for End Of Conversion (ADC converted one single channel)
 
 ADC_Status	ADC_Config(uint32_t Channel);	//we call this function with the ADC channel we want to read
 void 		wait(uint16_t);					//delay function, system clock based
@@ -26,7 +25,7 @@ int main(void)
 
 	ADC_Init();	//ADC initialization function
 
-	ADC_Config(ADC_CHSELR_CHSEL17);			//we'll configure the ADC for internal temperature reading first
+	ADC_Config(ADC_CHSELR_CHSEL17);	//we'll configure the ADC for internal temperature reading first
 	ADC1->CR |= ADC_CR_ADSTART;		//and start the ADC
 
 	while(1)
@@ -41,8 +40,8 @@ int main(void)
 						v_ref = ADC1->DR;				//storing the data read in v_ref
 						ADC_Config(ADC_CHSELR_CHSEL18);	//config the ADC for the next reading
 				break;
-				case ADC_CHSELR_CHSEL18:	//Internal temperature
-						temperature = ADC1->DR;		//we'll store the data read in temperature
+				case ADC_CHSELR_CHSEL18:				//Internal temperature
+						temperature = ADC1->DR;			//we'll store the data read in temperature
 				break;
 				default:
 						//error management

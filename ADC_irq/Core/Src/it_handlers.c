@@ -20,11 +20,5 @@ void ADC1_COMP_IRQHandler(void)
 			while(1);	//so we can hold the program at fault
 		}
 	}
-
-//	if(ADC1->ISR & ADC_ISR_EOSEQ)		//if there was and End Of Sequence
-//	{
-//		flag_EOC = 1;					//sets flag_EOC
-//		ADC1->ISR |= ADC_ISR_EOSEQ;		//clears EOS interrupt flag by writing 1 to it
-//	}
 }
 

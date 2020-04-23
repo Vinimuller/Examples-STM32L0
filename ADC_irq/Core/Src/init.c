@@ -20,8 +20,7 @@ void ADC_Init(void)
 	ADC1->CR |= ADC_CR_ADCAL;					//starting the calibration
 	while(ADC1->CR & ADC_CR_ADCAL);				//we have to wait until ADCAL = 0 (Can be handled by interrupt)
 
-	ADC1->IER		|=	ADC_IER_EOCIE;/*	|		//enables End Of Conversion interrupt
-						ADC_IER_EOSIE	;		//and End Of Sequence interrupt*/
+	ADC1->IER		|=	ADC_IER_EOCIE;			//enables End Of Conversion interrupt
 
 	//Enables IRQ and IRQ priority
 	NVIC_EnableIRQ(ADC1_COMP_IRQn);
