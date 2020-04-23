@@ -1,10 +1,13 @@
 #include "stm32l053xx.h"
 #include "stdio.h"
 #include "stdarg.h"
+#include "string.h"
 
-int serial_printf(const char *format, ...);
-int serial_write(char ptr, int len);
-int __io_putchar(int ch);
+//#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+
+//int __io_putchar(int ch);
+void vprint(const char *fmt, va_list argp);
+void serial_printf(const char *fmt, ...);
 
 char data = 0;	//data read via USART
 
@@ -35,8 +38,7 @@ int main(void)
 		while(!(USART1->ISR & USART_ISR_RXNE));	//we wait to receive a information
 		data = USART1->RDR;						//and store it in data
 
-		serial_write((data+1), 1);
-		//printf("data: %d", data);
+		serial_printf("Data received: %c\n\rNext letter on the alphabet: %c\n\n\r", data, (data+1));
 
 		asm("nop");	//so we can stop the program here
 	}
@@ -44,36 +46,56 @@ int main(void)
 	return 0;
 }
 
-int serial_write(char ptr, int len)
+void vprint(const char *fmt, va_list argp)
 {
-	int DataIdx;
+    char string[200];
+    int i = 0;
 
-	for (DataIdx = 0; DataIdx < len; DataIdx++)
-	{
-		__io_putchar(ptr++);
-	}
-	return len;
+    if(0 < vsprintf(string,fmt,argp)) // build string
+    {
+    	for(i=0; i< strlen(string); i++)
+    	{
+			USART1->TDR = string[i];
+			while(!(USART1->ISR & USART_ISR_TC));
+    	}
+    }
 }
 
-int __io_putchar(int ch)
+void serial_printf(const char *fmt, ...) // custom printf() function
 {
-	USART1->TDR = ch;
-	while(!(USART1->ISR & USART_ISR_TC));
-
-	return 0;
+    va_list argp;
+    va_start(argp, fmt);
+    vprint(fmt, argp);
+    va_end(argp);
 }
 
-int serial_printf(const char *format, ...)
-{
-	va_list arg;
-	int done;
+//PUTCHAR_PROTOTYPE
+//{
+//	USART1->TDR = ch;
+//	while(!(USART1->ISR & USART_ISR_TC));
+//
+//	return ch;
+//}
 
-	va_start (arg, format);
-	done = vfprintf (stdout, format, arg);
-	va_end (arg);
+//int _write(int file, char *ptr, int len)
+//{
+//	int DataIdx;
+//
+//	for (DataIdx = 0; DataIdx < len; DataIdx++)
+//	{
+//		USART1->TDR = (*ptr++);
+//		while(!(USART1->ISR & USART_ISR_TC));
+//	}
+//	return len;
+//}
 
-	return done;
-}
+//int __io_putchar(int ch)
+//{
+//	USART1->TDR = ch;
+//	while(!(USART1->ISR & USART_ISR_TC));
+//
+//	return 0;
+//}
 
 /*
  * --> CHARACTER TRANSMISSION PROCEDURE <--
