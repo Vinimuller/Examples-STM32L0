@@ -3,10 +3,10 @@
 
 int __io_putchar(int ch);	//restructured __io_putchar() function to use USART as output
 
-char data = 0;	//data received via USART
-
 int main(void)
 {
+	char data = 0;	//data received via USART
+
 	//--- ENABLING GPIOB 7 AND 6 AS USART1 RX AND TX
 	/*GPIOB
 	 * PB7	-> Alternate function (USART1 RX)	| Low speed
