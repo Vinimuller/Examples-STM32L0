@@ -10,6 +10,6 @@
 
 typedef enum {
 	ADC_ERROR	= -1
-}App_Errors;	//error flags for application management
+}ADC_Status;	//error flags for application management
 
 #endif /* INC_STRUCT_H_ */

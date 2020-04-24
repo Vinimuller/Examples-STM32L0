@@ -13,21 +13,20 @@
 #include "init.h"
 #include "struct.h"
 
-App_Errors	ADC_Config (uint8_t Channel);	//we call this function with the ADC channel we want to read
-void 		Wait (uint16_t);				//delay function, system clock based
+ADC_Status	ADC_Config(uint32_t Channel);	//we call this function with the ADC channel we want to read
+void 		wait(uint16_t);					//delay function, system clock based
 
-int main (void)
+int main(void)
 {
+	uint16_t	measure 	= 0,	//ADC data read is stored here after a conversion
+				v_ref 		= 0;	//internal reference voltage measured (after calculation)
+	int16_t		temperature	= 0;	//temperature in Celsius degrees measured (after calculation)
+
 	ADC_Init();	//ADC initialization function
 
 	while(1)
 	{
-		//--- Nested variables' declaration
-		uint16_t	measure 	= 0,	//ADC data read is stored here after a conversion
-					v_ref 		= 0;	//internal reference voltage measured (after calculation)
-		int16_t		temperature	= 0;	//temperature in Celsius degrees measured (after calculation)
-
-		ADC_Config(CH_INT_TEMP);			//configuring the ADC for internal temperature reading
+		ADC_Config(ADC_CHSELR_CHSEL18);		//configuring the ADC for internal temperature reading
 		ADC1->CR |= ADC_CR_ADSTART;			//starting the ADC
 		while(!(ADC1->ISR & ADC_ISR_EOC));	//and waiting for End Of Conversion flag to set
 		measure = ADC1->DR;					//storing the data read in measure
@@ -38,7 +37,7 @@ int main (void)
 		temperature = temperature / (int32_t)(*TEMP130_CAL_ADDR - *TEMP30_CAL_ADDR);
 		temperature = temperature + 30;			//the calculated temperature is now stored in temperature
 
-		ADC_Config(CH_V_REF);				//configuring the ADC for internal reference voltage reading
+		ADC_Config(ADC_CHSELR_CHSEL17);		//configuring the ADC for internal reference voltage reading
 		ADC1->CR |= ADC_CR_ADSTART;			//starting the ADC
 		while(!(ADC1->ISR & ADC_ISR_EOC));	//and waiting for End Of Conversion flag to set
 		measure = ADC1->DR;					//storing the data read in measure
@@ -54,7 +53,7 @@ int main (void)
 	return 0;
 }
 
-App_Errors ADC_Config (uint8_t Channel)
+ADC_Status ADC_Config(uint32_t Channel)
 {
 	if(ADC1->CR & ADC_CR_ADSTART)			//we have to be sure there's no ongoing conversion
 	{
@@ -63,17 +62,16 @@ App_Errors ADC_Config (uint8_t Channel)
 	}
 	ADC1->CR |= ADC_CR_ADDIS;				//disables the ADC
 	while(ADC1->CR & ADC_CR_ADEN);
-	DISABLE_ALL_CHANNELS();					//and disables all channels
 
 	switch (Channel)
 	{
-		case CH_INT_TEMP:
-				ADC1->CHSELR |= ADC_CHSELR_CHSEL18;		//selecting the TSEN channel
+		case ADC_CHSELR_CHSEL18:
+				ADC1->CHSELR = ADC_CHSELR_CHSEL18;		//selecting the TSEN channel
 				ADC->CCR |= ADC_CCR_TSEN; 				//enables temperature sensor
-				Wait(TIME_10uSEC);						//we have to wait for the proper time for the Tsense to wake up
+				wait(TIME_10uSEC);						//we have to wait for the proper time for the Tsense to wake up
 		break;
-		case CH_V_REF:
-				ADC1->CHSELR |= ADC_CHSELR_CHSEL17;		//selecting the VREF channel
+		case ADC_CHSELR_CHSEL17:
+				ADC1->CHSELR = ADC_CHSELR_CHSEL17;		//selecting the VREF channel
 				ADC->CCR |= ADC_CCR_VREFEN; 			//enables internal reference voltage
 		break;
 		default:
@@ -87,7 +85,7 @@ App_Errors ADC_Config (uint8_t Channel)
 	return 0;
 }
 
-void Wait (uint16_t time)
+void wait(uint16_t time)
 {
 	while(time--);
 }
