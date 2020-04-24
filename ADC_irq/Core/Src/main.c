@@ -12,7 +12,6 @@
 #include "macros.h"
 #include "struct.h"
 
-ADC_Status	ADC_Config(uint32_t Channel);	//we call this function with the ADC channel we want to read
 void 		wait(uint16_t time);			//delay function, system clock based
 
 uint8_t	flag_EOC = 0;						//flag for End Of Conversion (ADC converted one single channel)
