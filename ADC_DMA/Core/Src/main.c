@@ -12,7 +12,7 @@
 #include "macros.h"
 #include "struct.h"
 
-void 		wait(uint16_t time);			//delay function, system clock based
+void 		wait(uint16_t time);	//delay function, system clock based
 
 int main(void)
 {
@@ -63,9 +63,9 @@ int main(void)
 	ADC1->CHSELR = ADC_CHSELR_CHSEL17;				//selecting the VREF channel
 	ADC->CCR |= ADC_CCR_VREFEN; 					//enables internal reference voltage
 
-	DMA1_Channel1->CNDTR = 	1; 						//number of data to be transferred
-	DMA1_Channel1->CMAR |= (uint32_t) &(v_ref);		//set memory register address for DMA
-	DMA1_Channel1->CCR 	|=	DMA_CCR_EN;				//enables the DMA
+	DMA1_Channel1->CNDTR = 1; 						//number of data to be transferred
+	DMA1_Channel1->CMAR = (uint32_t) &(v_ref);		//set memory register address for DMA
+	DMA1_Channel1->CCR 	|= DMA_CCR_EN;				//enables the DMA
 
 	ADC1->CR |= ADC_CR_ADEN;						//then we enable the ADC
 	while(!(ADC1->ISR & ADC_ISR_ADRDY));			//and wait for it to be ready. (Can be handled by interrupt)
@@ -73,39 +73,39 @@ int main(void)
 	/*									*
 	 * --- STARTING THE ADC READING --- *
 	 *									*/
-	ADC1->CR |= ADC_CR_ADSTART;					//starts the ADC
+	ADC1->CR |= ADC_CR_ADSTART;								//starts the ADC
 
 	while(1)
 	{
-		while(!(ADC1->ISR & ADC_ISR_EOC)){}		//we wait for the ADC reading to finish
-		ADC1->ISR &= ~ADC_ISR_EOC;				//and clear the flag
+		while(!(ADC1->ISR & ADC_ISR_EOC)){}					//we wait for the ADC reading to finish
+		ADC1->ISR &= ~ADC_ISR_EOC;							//and clear the flag
 
 		//configuring the next channel to be read
-		DMA1_Channel1->CCR	&= ~DMA_CCR_EN;		//disables the DMA
-		ADC1->CHSELR = ADC_CHSELR_CHSEL18;		//selects internal temperature channel
-		ADC->CCR 	|= ADC_CCR_TSEN; 			//enables temperature sensor
-		wait(TIME_10uSEC);						//we have to wait for the proper time for the Tsense to wake up
+		DMA1_Channel1->CCR	&= ~DMA_CCR_EN;					//disables the DMA
+		ADC1->CHSELR = ADC_CHSELR_CHSEL18;					//selects internal temperature channel
+		ADC->CCR 	|= ADC_CCR_TSEN; 						//enables temperature sensor
+		wait(TIME_10uSEC);									//we have to wait for the proper time for the Tsense to wake up
 
-		DMA1_Channel1->CNDTR = 	1; 							//number of data to be transferred
-		DMA1_Channel1->CMAR |= (uint32_t) &(temperature);	//set memory register address for DMA
+		//DMA1_Channel1->CNDTR = 1; 						//number of data to be transferred
+		DMA1_Channel1->CMAR = (uint32_t) &(temperature);	//set memory register address for DMA
 		DMA1_Channel1->CCR 	|= DMA_CCR_EN;					//enables the DMA
 
 		ADC1->CR 	|= ADC_CR_ADSTART;						//starts the ADC
 
-		while(!(ADC1->ISR & ADC_ISR_EOC)){}		//we wait for the ADC reading to finish
-		ADC1->ISR &= ~ADC_ISR_EOC;				//and clear the flag
+		while(!(ADC1->ISR & ADC_ISR_EOC)){}					//we wait for the ADC reading to finish
+		ADC1->ISR &= ~ADC_ISR_EOC;							//and clear the flag
 
 		//Vref calculation as in RM
 		aux = v_ref;
 		v_ref = (3 * (int32_t) (*VREFINT_CAL));
-		v_ref = (v_ref * 1000) / aux;			//*1000 so we have Vref in mV
-												//the calculated internal reference voltage is now stored in v_ref
+		v_ref = (v_ref * 1000) / aux;						//*1000 so we have Vref in mV
+															//the calculated internal reference voltage is now stored in v_ref
 
 		//temperature calculation as in RM example
 		temperature = ((temperature * VDD_APPLI / VDD_CALIB) - (int32_t) *TEMP30_CAL_ADDR);
 		temperature = temperature * (int32_t)(130 - 30);
 		temperature = temperature / (int32_t)(*TEMP130_CAL_ADDR - *TEMP30_CAL_ADDR);
-		temperature = temperature + 30;			//the calculated temperature is now stored in temperature
+		temperature = temperature + 30;						//the calculated temperature is now stored in temperature
 
 		asm("nop");		//so we can hold the uC here after reading the temperature and Vref
 	}
