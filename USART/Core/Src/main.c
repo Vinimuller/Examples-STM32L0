@@ -5,7 +5,7 @@ int __io_putchar(int ch);	//restructured __io_putchar() function to use USART as
 
 int main(void)
 {
-	char data = 0;	//data received via USART
+	char usart1_rx_data = 0;	//data received via USART
 
 	//--- ENABLING GPIOB 7 AND 6 AS USART1 RX AND TX
 	/*GPIOB
@@ -29,10 +29,10 @@ int main(void)
 	{
 		//--- USART1 RX
 		while(!(USART1->ISR & USART_ISR_RXNE));	//we wait to receive a information
-		data = USART1->RDR;						//store it in data
+		usart1_rx_data = USART1->RDR;						//store it in data
 
 		//and send back what we've received and the next letter in the alphabet
-		printf("Data received: %c\r\nNext letter in the alphabet: %c\r\n\n", data, (data+1));
+		printf("Data received: %c\r\nNext letter in the alphabet: %c\r\n\n", usart1_rx_data, (usart1_rx_data+1));
 	}
 
 	return 0;
