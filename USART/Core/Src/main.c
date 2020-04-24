@@ -1,7 +1,5 @@
 #include "stm32l053xx.h"
 #include "stdio.h"
-#include "stdarg.h"
-#include "string.h"
 
 int __io_putchar(int ch);	//restructured __io_putchar() function to use USART as output
 
