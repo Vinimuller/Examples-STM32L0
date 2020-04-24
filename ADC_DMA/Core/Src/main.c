@@ -25,7 +25,6 @@ int main(void)
 	 *							  */
 	RCC->AHBENR |= RCC_AHBENR_DMAEN;
 	DMA1_Channel1->CPAR	|= 	(uint32_t) &(ADC1->DR);		//setting peripheral address
-	DMA1_Channel1->CNDTR = 	1; 							//number of data to be transferred
 	DMA1_Channel1->CCR 	|=	DMA_CCR_CIRC	|			//enable circular mode
 							DMA_CCR_MINC	|			//memory increment
 							DMA_CCR_PSIZE_0	|			//peripheral size set to 16 bits
@@ -64,6 +63,7 @@ int main(void)
 	ADC1->CHSELR = ADC_CHSELR_CHSEL17;				//selecting the VREF channel
 	ADC->CCR |= ADC_CCR_VREFEN; 					//enables internal reference voltage
 
+	DMA1_Channel1->CNDTR = 	1; 						//number of data to be transferred
 	DMA1_Channel1->CMAR |= (uint32_t) &(v_ref);		//set memory register address for DMA
 	DMA1_Channel1->CCR 	|=	DMA_CCR_EN;				//enables the DMA
 
