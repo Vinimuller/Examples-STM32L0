@@ -31,10 +31,10 @@ int main(void)
 	 *							  */
 	RCC->AHBENR |= RCC_AHBENR_DMAEN;
 	DMA1_Channel1->CPAR	= 	(uint32_t) &(ADC1->DR);		//setting peripheral address
-	DMA1_Channel1->CCR 	|=	DMA_CCR_CIRC	|			//enable circular mode
-							DMA_CCR_MINC	|			//memory increment
+	DMA1_Channel1->CCR 	|=	DMA_CCR_MINC	|			//memory increment
 							DMA_CCR_PSIZE_0	|			//peripheral size set to 16 bits
 							DMA_CCR_MSIZE_0	;			//memory size set to 16 bits
+
 	/*										*
 	 * --- ADC INITIALIZATION PROCEDURE --- *
 	 *										*/
@@ -44,12 +44,12 @@ int main(void)
 	ADC->CCR 		|= 	ADC_CCR_LFMEN;			//low frequency mode enable
 	ADC1->SMPR 		|= 	ADC_SMPR_SMPR_1	|		//sets sample time for 12.5 ADC clock cycles
 						ADC_SMPR_SMPR_0	;		//because we need 10.5 ADC clock cycles at least
-	ADC1->CFGR1		|=	ADC_CFGR1_DMACFG|		//DMA in circular mode
-						ADC_CFGR1_DMAEN	|		//enables DMA
-						ADC_CFGR1_WAIT;			//enables wait mode to prevent overrun
+	ADC1->CFGR1		|=	ADC_CFGR1_WAIT;			//enables wait mode to prevent overrun
 
 	ADC1->CR |= ADC_CR_ADCAL;					//starting the calibration
 	while(ADC1->CR & ADC_CR_ADCAL);				//we have to wait until ADCAL = 0 (Can be handled by interrupt)
+
+	ADC1->CFGR1	|=	ADC_CFGR1_DMAEN	;			//enables DMA	- must be done AFTER calibrate the AD
 
 	ADC1->ISR|= ADC_ISR_ADRDY;					//clear the ADRDY bit by programming it to 1
 	ADC1->CR |= ADC_CR_ADEN;					//then we enable the ADC
@@ -66,11 +66,15 @@ int main(void)
 	ADC1->CR |= ADC_CR_ADDIS;						//disables the ADC
 	while(ADC1->CR & ADC_CR_ADEN);
 
-	ADC1->CHSELR = ADC_CHSELR_CHSEL17;				//selecting the VREF channel
-	ADC->CCR |= ADC_CCR_VREFEN; 					//enables internal reference voltage
+	ADC1->CHSELR = 	ADC_CHSELR_CHSEL17	|			//selecting the VREF channel
+					ADC_CHSELR_CHSEL18	;			//and Tsense channel
+	ADC->CCR 	|= 	ADC_CCR_VREFEN	| 				//enables internal reference voltage
+					ADC_CCR_TSEN	; 				//and temperature sensor
+	wait(TIME_10uSEC);								//we have to wait for the proper time for the Tsense to wake up
 
-	DMA1_Channel1->CNDTR = 1; 						//number of data to be transferred
-	DMA1_Channel1->CMAR = (uint32_t) &(ADC_measure.v_ref);		//set memory register address for DMA
+	DMA1_Channel1->CNDTR = 2; 						//number of data to be transferred
+	//set the first memory register address for DMA
+	DMA1_Channel1->CMAR = (uint32_t) &(ADC_measure.v_ref);
 	DMA1_Channel1->CCR 	|= DMA_CCR_EN;				//enables the DMA
 
 	ADC1->CR |= ADC_CR_ADEN;						//then we enable the ADC
@@ -79,27 +83,14 @@ int main(void)
 	/*									*
 	 * --- STARTING THE ADC READING --- *
 	 *									*/
-	ADC1->CR |= ADC_CR_ADSTART;								//starts the ADC
+	ADC1->CR |= ADC_CR_ADSTART;						//starts the ADC
 
 	while(1)
 	{
-		while(!(ADC1->ISR & ADC_ISR_EOC)){}					//we wait for the ADC reading to finish
-		ADC1->ISR &= ~ADC_ISR_EOC;							//and clear the flag
-
-		//configuring the next channel to be read
-		DMA1_Channel1->CCR	&= ~DMA_CCR_EN;					//disables the DMA
-		ADC1->CHSELR = ADC_CHSELR_CHSEL18;					//selects internal temperature channel
-		ADC->CCR 	|= ADC_CCR_TSEN; 						//enables temperature sensor
-		wait(TIME_10uSEC);									//we have to wait for the proper time for the Tsense to wake up
-
-		//DMA1_Channel1->CNDTR = 1; 						//number of data to be transferred
-		DMA1_Channel1->CMAR = (uint32_t) &(ADC_measure.temperature);	//set memory register address for DMA
-		DMA1_Channel1->CCR 	|= DMA_CCR_EN;					//enables the DMA
-
-		ADC1->CR 	|= ADC_CR_ADSTART;						//starts the ADC
-
-		while(!(ADC1->ISR & ADC_ISR_EOC)){}					//we wait for the ADC reading to finish
-		ADC1->ISR &= ~ADC_ISR_EOC;							//and clear the flag
+		//we wait for the ADC and DMA to complete the process
+		while(!(ADC1->ISR & ADC_ISR_EOC) && !(DMA1->ISR & DMA_ISR_TCIF1)){}
+		ADC1->ISR &= ~ADC_ISR_EOC;		//clear EOC flag
+		DMA1->ISR &= ~DMA_ISR_TCIF1;	//clear TC flag
 
 		//Vref calculation as in RM
 		aux = ADC_measure.v_ref;
