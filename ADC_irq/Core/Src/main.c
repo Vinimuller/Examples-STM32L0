@@ -106,7 +106,8 @@ int main(void)
 				break;
 			}
 
-			if(ADC1->CHSELR & ADC_CHSELR_CHSEL18)		//if we've finished reading all channels (could be done with a #define)
+			//if we've finished reading all channels (could be done with a #define)
+			if((ADC1->CHSELR & ADC_CHSELR_CHSEL18) && (temperature!=0))
 			{											//we're going to calculate what we need
 				uint16_t aux = v_ref;					//we only use aux to calculate v_ref
 
