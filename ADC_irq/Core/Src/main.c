@@ -22,12 +22,13 @@ void ADC1_COMP_IRQHandler(void)
 	{
 		flag_EOC = 1;					//sets flag_EOC
 		ADC1->ISR |= ADC_ISR_EOC;		//clears EOC interrupt flag by writing 1 to it
-
-		if(ADC1->ISR & ADC_ISR_OVR)
-		{
-			while(1);	//so we can hold the program at fault
-		}
 	}
+
+	if(ADC1->ISR & ADC_ISR_OVR)
+	{
+		while(1);	//so we can hold the program at fault
+	}
+
 }
 
 int main(void)
