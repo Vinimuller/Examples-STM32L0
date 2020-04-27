@@ -108,6 +108,10 @@ int main(void)
 				case ADC_CHSELR_CHSEL18:				//Internal temperature
 						temperature = ADC1->DR;			//we'll store the data read in temperature
 
+						//configuring channel 17 to read again
+						ADC1->CHSELR = ADC_CHSELR_CHSEL17;
+						ADC1->CR 	|= ADC_CR_ADSTART;	//starts the ADC
+
 						//calculates temperature - as in RM
 						temperature = ((temperature * VDD_APPLI / VDD_CALIB) - (int32_t) *TEMP30_CAL_ADDR);
 						temperature = temperature * (int32_t)(130 - 30);
