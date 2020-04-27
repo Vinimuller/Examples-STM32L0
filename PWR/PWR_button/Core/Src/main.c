@@ -2,6 +2,7 @@
 
 int main(void)
 {
+	uint8_t	bt_debounce = 0;	//used for debounce the button
 	/*							   *
 	 * --- GPIO INITIALIZATION --- *
 	 *							   */
@@ -19,12 +20,21 @@ int main(void)
 	//Green led, debug purpose
 	GPIOA->MODER &= ~GPIO_MODER_MODE7_1;
 	GPIOA->BSRR |= GPIO_BSRR_BR_7;
+	GPIOA->ODR |= GPIO_ODR_OD7_Msk;
 
 	while(1)
 	{
 		if(!(GPIOA->IDR & GPIO_IDR_ID10_Msk))
 		{
-			(GPIOA->ODR ^=GPIO_IDR_ID7_Msk);
+			if(bt_debounce++==200)
+			{
+				(GPIOA->ODR ^=GPIO_IDR_ID7_Msk);
+				while(!(GPIOA->IDR & GPIO_IDR_ID10_Msk));
+			}
+		}
+		else
+		{
+			bt_debounce = 0;
 		}
 	}
 
