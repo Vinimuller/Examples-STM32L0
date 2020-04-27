@@ -70,8 +70,10 @@ int main(void)
 	ADC1->CR |= ADC_CR_ADDIS;				//disables the ADC
 	while(ADC1->CR & ADC_CR_ADEN);
 
-	ADC1->CHSELR = ADC_CHSELR_CHSEL17;		//selecting the VREF channel
-	ADC->CCR |= ADC_CCR_VREFEN; 			//enables internal reference voltage
+	ADC1->CHSELR = 	ADC_CHSELR_CHSEL17;		//selecting the VREF channel (we're going to read it first)
+	ADC->CCR	|= 	ADC_CCR_VREFEN	| 		//enables internal reference voltage
+					ADC_CCR_TSEN	;		//and the temperature sensor
+	wait(TIME_10uSEC);						//we have to wait for the proper time for the Tsense to wake up
 
 	ADC1->CR |= ADC_CR_ADEN;				//then we enable the ADC
 	while(!(ADC1->ISR & ADC_ISR_ADRDY));	//and wait for it to be ready. (Can be handled by interrupt)
@@ -94,8 +96,6 @@ int main(void)
 
 						//configuring the next channel to be read
 						ADC1->CHSELR = ADC_CHSELR_CHSEL18;
-						ADC->CCR 	|= ADC_CCR_TSEN; 	//enables temperature sensor
-						wait(TIME_10uSEC);				//we have to wait for the proper time for the Tsense to wake up
 						ADC1->CR 	|= ADC_CR_ADSTART;	//starts the ADC
 				break;
 				case ADC_CHSELR_CHSEL18:				//Internal temperature
