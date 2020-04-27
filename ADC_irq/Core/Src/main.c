@@ -32,7 +32,8 @@ void ADC1_COMP_IRQHandler(void)
 
 int main(void)
 {
-	uint16_t	v_ref 		= 0;	//internal reference voltage measured (after calculation)
+	uint16_t	aux 		= 0,	//we only use aux to calculate v_ref
+				v_ref 		= 0;	//internal reference voltage measured (after calculation)
 	int16_t		temperature	= 0;	//temperature in Celsius degrees measured (after calculation)
 
 	/*										*
@@ -97,34 +98,28 @@ int main(void)
 						//configuring the next channel to be read
 						ADC1->CHSELR = ADC_CHSELR_CHSEL18;
 						ADC1->CR 	|= ADC_CR_ADSTART;	//starts the ADC
+
+						//calculates v_ref - as in RM
+						aux = v_ref;
+						v_ref = (3 * (int32_t) (*VREFINT_CAL));
+						v_ref = (v_ref * 1000) / aux;	//*1000 so we have Vref in mV
+														//the calculated internal reference voltage is now stored in v_ref
 				break;
 				case ADC_CHSELR_CHSEL18:				//Internal temperature
 						temperature = ADC1->DR;			//we'll store the data read in temperature
+
+						//calculates temperature - as in RM
+						temperature = ((temperature * VDD_APPLI / VDD_CALIB) - (int32_t) *TEMP30_CAL_ADDR);
+						temperature = temperature * (int32_t)(130 - 30);
+						temperature = temperature / (int32_t)(*TEMP130_CAL_ADDR - *TEMP30_CAL_ADDR);
+						temperature = temperature + 30;	//the calculated temperature is now stored in temperature
+
+						asm("nop");		//so we can hold the uC here after reading the temperature and Vref
 				break;
 				default:
 						//error management
 				break;
 			}
-
-			//if we've finished reading all channels (could be done with a #define)
-			if((ADC1->CHSELR & ADC_CHSELR_CHSEL18) && (temperature!=0))
-			{											//we're going to calculate what we need
-				uint16_t aux = v_ref;					//we only use aux to calculate v_ref
-
-				//Vref calculation as in RM
-				v_ref = (3 * (int32_t) (*VREFINT_CAL));
-				v_ref = (v_ref * 1000) / aux;			//*1000 so we have Vref in mV
-														//the calculated internal reference voltage is now stored in v_ref
-
-				//temperature calculation as in RM example
-				temperature = ((temperature * VDD_APPLI / VDD_CALIB) - (int32_t) *TEMP30_CAL_ADDR);
-				temperature = temperature * (int32_t)(130 - 30);
-				temperature = temperature / (int32_t)(*TEMP130_CAL_ADDR - *TEMP30_CAL_ADDR);
-				temperature = temperature + 30;			//the calculated temperature is now stored in temperature
-
-				asm("nop");		//so we can hold the uC here after reading the temperature and Vref
-			}
-
 		}
 	}
 
