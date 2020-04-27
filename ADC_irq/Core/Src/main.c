@@ -10,7 +10,6 @@
 
 #include "stm32l053xx.h"
 #include "macros.h"
-#include "struct.h"
 
 void 		wait(uint16_t time);			//delay function, system clock based
 
