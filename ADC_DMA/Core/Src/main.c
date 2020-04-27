@@ -11,19 +11,26 @@
 #include "stm32l053xx.h"
 #include "macros.h"
 
+struct measure {
+	uint16_t	v_ref;			//internal reference voltage measured (after calculation)
+	int16_t		temperature;	//temperature in Celsius degrees measured (after calculation)
+}ADC_measure;	//struct with all the information read by the ADC channel
+
 void 		wait(uint16_t time);	//delay function, system clock based
 
 int main(void)
 {
-	uint16_t 	aux 		= 0,	//we only use aux to calculate v_ref
-				v_ref 		= 0;	//internal reference voltage measured (after calculation)
-	int16_t		temperature	= 0;	//temperature in Celsius degrees measured (after calculation)
+	uint16_t aux = 0;	//we only use aux to calculate v_ref
+
+	//we have to initialize the struct manually
+	ADC_measure.v_ref 		= 0;
+	ADC_measure.temperature	= 0;
 
 	/*							  *
 	 * --- DMA INITIALIZATION --- *
 	 *							  */
 	RCC->AHBENR |= RCC_AHBENR_DMAEN;
-	DMA1_Channel1->CPAR	|= 	(uint32_t) &(ADC1->DR);		//setting peripheral address
+	DMA1_Channel1->CPAR	= 	(uint32_t) &(ADC1->DR);		//setting peripheral address
 	DMA1_Channel1->CCR 	|=	DMA_CCR_CIRC	|			//enable circular mode
 							DMA_CCR_MINC	|			//memory increment
 							DMA_CCR_PSIZE_0	|			//peripheral size set to 16 bits
@@ -63,7 +70,7 @@ int main(void)
 	ADC->CCR |= ADC_CCR_VREFEN; 					//enables internal reference voltage
 
 	DMA1_Channel1->CNDTR = 1; 						//number of data to be transferred
-	DMA1_Channel1->CMAR = (uint32_t) &(v_ref);		//set memory register address for DMA
+	DMA1_Channel1->CMAR = (uint32_t) &(ADC_measure.v_ref);		//set memory register address for DMA
 	DMA1_Channel1->CCR 	|= DMA_CCR_EN;				//enables the DMA
 
 	ADC1->CR |= ADC_CR_ADEN;						//then we enable the ADC
@@ -86,7 +93,7 @@ int main(void)
 		wait(TIME_10uSEC);									//we have to wait for the proper time for the Tsense to wake up
 
 		//DMA1_Channel1->CNDTR = 1; 						//number of data to be transferred
-		DMA1_Channel1->CMAR = (uint32_t) &(temperature);	//set memory register address for DMA
+		DMA1_Channel1->CMAR = (uint32_t) &(ADC_measure.temperature);	//set memory register address for DMA
 		DMA1_Channel1->CCR 	|= DMA_CCR_EN;					//enables the DMA
 
 		ADC1->CR 	|= ADC_CR_ADSTART;						//starts the ADC
@@ -95,16 +102,16 @@ int main(void)
 		ADC1->ISR &= ~ADC_ISR_EOC;							//and clear the flag
 
 		//Vref calculation as in RM
-		aux = v_ref;
-		v_ref = (3 * (int32_t) (*VREFINT_CAL));
-		v_ref = (v_ref * 1000) / aux;						//*1000 so we have Vref in mV
-															//the calculated internal reference voltage is now stored in v_ref
+		aux = ADC_measure.v_ref;
+		ADC_measure.v_ref = (3 * (int32_t) (*VREFINT_CAL));
+		ADC_measure.v_ref = (ADC_measure.v_ref * 1000) / aux;	//*1000 so we have Vref in mV
+																//the calculated internal reference voltage is now stored in v_ref
 
 		//temperature calculation as in RM example
-		temperature = ((temperature * VDD_APPLI / VDD_CALIB) - (int32_t) *TEMP30_CAL_ADDR);
-		temperature = temperature * (int32_t)(130 - 30);
-		temperature = temperature / (int32_t)(*TEMP130_CAL_ADDR - *TEMP30_CAL_ADDR);
-		temperature = temperature + 30;						//the calculated temperature is now stored in temperature
+		ADC_measure.temperature = ((ADC_measure.temperature * VDD_APPLI / VDD_CALIB) - (int32_t) *TEMP30_CAL_ADDR);
+		ADC_measure.temperature = ADC_measure.temperature * (int32_t)(130 - 30);
+		ADC_measure.temperature = ADC_measure.temperature / (int32_t)(*TEMP130_CAL_ADDR - *TEMP30_CAL_ADDR);
+		ADC_measure.temperature = ADC_measure.temperature + 30;	//the calculated temperature is now stored in temperature
 
 		asm("nop");		//so we can hold the uC here after reading the temperature and Vref
 	}
