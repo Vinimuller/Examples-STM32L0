@@ -1,20 +1,21 @@
 #include "stm32l053xx.h"
 #include "stdio.h"
-#include "stdarg.h"
+
+int __io_putchar(int ch);	//restructured __io_putchar() function to use USART as output
 
 int main(void)
 {
-	char data = 0;	//data read via USART
+	char usart1_rx_data = 0;	//data received via USART
 
-	//--- ENABLING GPIOB 6 AND 7 AND USART1 RX AND TX
+	//--- ENABLING GPIOB 7 AND 6 AS USART1 RX AND TX
 	/*GPIOB
 	 * PB7	-> Alternate function (USART1 RX)	| Low speed
 	 * PB6	-> Alternate function (USART1 TX)	| Low speed
 	 */
 	RCC->IOPENR  |=  RCC_IOPENR_GPIOBEN;
 
-	GPIOB->MODER &= ~GPIO_MODER_MODE6_0;
-	GPIOB->MODER &= ~GPIO_MODER_MODE7_0;
+	GPIOB->MODER &=	~(	GPIO_MODER_MODE6_0	|
+						GPIO_MODER_MODE7_0	);
 
 	//--- USART1 CONFIG
 	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
@@ -24,17 +25,24 @@ int main(void)
 					USART_CR1_TE |	//enables TX
 					USART_CR1_RE;	//enables RX
 
-	//--- USART1 RX
-	while(!(USART1->ISR & USART_ISR_RXNE));	//we wait to receive a information
-	data = USART1->RDR;						//and store it in data
+	while(1)
+	{
+		//--- USART1 RX
+		while(!(USART1->ISR & USART_ISR_RXNE));	//we wait to receive a information
+		usart1_rx_data = USART1->RDR;						//store it in data
 
-	//--- USART1 TX
-	USART1->TDR = 97;	//sends 97 'a'		//then we send a message as a response
-	while(!(USART1->ISR & USART_ISR_TC));	//and wait for TC flag to set, knowing that all the data was sent
+		//and send back what we've received and the next letter in the alphabet
+		printf("Data received: %c\r\nNext letter in the alphabet: %c\r\n\n", usart1_rx_data, (usart1_rx_data+1));
+	}
 
-//	printf("data: %c", data);	//that's for later
+	return 0;
+}
 
-	asm("nop");	//so we can stop the program here
+//restructured __io_putchar() function to use USART as output
+int __io_putchar(int ch)
+{
+	USART1->TDR = ch;
+	while(!(USART1->ISR & USART_ISR_TC));
 
 	return 0;
 }
