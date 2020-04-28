@@ -72,10 +72,9 @@ int main(void)
 					ADC_CCR_TSEN	; 				//and temperature sensor
 	wait(TIME_10uSEC);								//we have to wait for the proper time for the Tsense to wake up
 
-	DMA1_Channel1->CNDTR = 2; 						//number of data to be transferred
-	//set the first memory register address for DMA
-	DMA1_Channel1->CMAR = (uint32_t) &(ADC_measure.v_ref);
-	DMA1_Channel1->CCR 	|= DMA_CCR_EN;				//enables the DMA
+	DMA1_Channel1->CNDTR = 2; 								//number of data to be transferred
+	DMA1_Channel1->CMAR = (uint32_t) &(ADC_measure.v_ref);	//set the first memory register address for DMA
+	DMA1_Channel1->CCR 	|= DMA_CCR_EN;						//enables the DMA
 
 	ADC1->CR |= ADC_CR_ADEN;						//then we enable the ADC
 	while(!(ADC1->ISR & ADC_ISR_ADRDY));			//and wait for it to be ready. (Can be handled by interrupt)
