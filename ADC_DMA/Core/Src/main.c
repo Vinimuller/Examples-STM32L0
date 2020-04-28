@@ -21,11 +21,7 @@ void 		wait(uint16_t time);	//delay function, system clock based
 int main(void)
 {
 	sADC_measure 	ADC_measure = {0};	//struct with all the information read by the ADC channel
-	uint16_t 		aux = 0;		//we only use aux to calculate v_ref
-
-//	//we have to initialize the struct manually
-//	ADC_measure.v_ref 		= 0;
-//	ADC_measure.temperature	= 0;
+	uint16_t 		aux = 0;			//we only use aux to calculate v_ref
 
 	/*							  *
 	 * --- DMA INITIALIZATION --- *
@@ -81,11 +77,6 @@ int main(void)
 
 	ADC1->CR |= ADC_CR_ADEN;						//then we enable the ADC
 	while(!(ADC1->ISR & ADC_ISR_ADRDY));			//and wait for it to be ready. (Can be handled by interrupt)
-
-	/*									*
-	 * --- STARTING THE ADC READING --- *
-	 *									*/
-//	ADC1->CR |= ADC_CR_ADSTART;						//starts the ADC
 
 	while(1)
 	{
