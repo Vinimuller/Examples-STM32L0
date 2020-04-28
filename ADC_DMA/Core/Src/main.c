@@ -11,20 +11,21 @@
 #include "stm32l053xx.h"
 #include "macros.h"
 
-struct measure {
+typedef struct {
 	uint16_t	v_ref;			//internal reference voltage measured (after calculation)
 	int16_t		temperature;	//temperature in Celsius degrees measured (after calculation)
-}ADC_measure;	//struct with all the information read by the ADC channel
+}sADC_measure;	//struct with all the information read by the ADC channel
 
 void 		wait(uint16_t time);	//delay function, system clock based
 
 int main(void)
 {
-	uint16_t aux = 0;	//we only use aux to calculate v_ref
+	sADC_measure 	ADC_measure = {0};	//struct with all the information read by the ADC channel
+	uint16_t 		aux = 0;		//we only use aux to calculate v_ref
 
-	//we have to initialize the struct manually
-	ADC_measure.v_ref 		= 0;
-	ADC_measure.temperature	= 0;
+//	//we have to initialize the struct manually
+//	ADC_measure.v_ref 		= 0;
+//	ADC_measure.temperature	= 0;
 
 	/*							  *
 	 * --- DMA INITIALIZATION --- *
