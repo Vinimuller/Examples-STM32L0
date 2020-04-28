@@ -31,7 +31,8 @@ int main(void)
 	 *							  */
 	RCC->AHBENR |= RCC_AHBENR_DMAEN;
 	DMA1_Channel1->CPAR	= 	(uint32_t) &(ADC1->DR);		//setting peripheral address
-	DMA1_Channel1->CCR 	|=	DMA_CCR_MINC	|			//memory increment
+	DMA1_Channel1->CCR 	|=	DMA_CCR_CIRC	|			//DMA in circular mode
+							DMA_CCR_MINC	|			//memory increment
 							DMA_CCR_PSIZE_0	|			//peripheral size set to 16 bits
 							DMA_CCR_MSIZE_0	;			//memory size set to 16 bits
 
@@ -49,7 +50,8 @@ int main(void)
 	ADC1->CR |= ADC_CR_ADCAL;					//starting the calibration
 	while(ADC1->CR & ADC_CR_ADCAL);				//we have to wait until ADCAL = 0 (Can be handled by interrupt)
 
-	ADC1->CFGR1	|=	ADC_CFGR1_DMAEN	;			//enables DMA	- must be done AFTER calibrate the AD
+	ADC1->CFGR1	|=	ADC_CFGR1_DMACFG |			//DMA in circular mode
+					ADC_CFGR1_DMAEN	;			//enables DMA	- must be done AFTER calibrate the AD
 
 	ADC1->ISR|= ADC_ISR_ADRDY;					//clear the ADRDY bit by programming it to 1
 	ADC1->CR |= ADC_CR_ADEN;					//then we enable the ADC
@@ -82,13 +84,16 @@ int main(void)
 	/*									*
 	 * --- STARTING THE ADC READING --- *
 	 *									*/
-	ADC1->CR |= ADC_CR_ADSTART;						//starts the ADC
+//	ADC1->CR |= ADC_CR_ADSTART;						//starts the ADC
 
 	while(1)
 	{
+		ADC1->CR |= ADC_CR_ADSTART;						//starts the ADC
+
 		//we wait for the ADC and DMA to complete the process
-		while(!(ADC1->ISR & ADC_ISR_EOC) && !(DMA1->ISR & DMA_ISR_TCIF1)){}
-		ADC1->ISR &= ~ADC_ISR_EOC;		//clear EOC flag
+		while(!(ADC1->ISR & ADC_ISR_EOS) && !(DMA1->ISR & DMA_ISR_TCIF1)){}
+		wait(TIME_10uSEC);				//10 uS delay
+		ADC1->ISR &= ~ADC_ISR_EOS;		//clear EOS flag
 		DMA1->ISR &= ~DMA_ISR_TCIF1;	//clear TC flag
 
 		//Vref calculation as in RM
