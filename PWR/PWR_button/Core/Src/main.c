@@ -3,6 +3,9 @@
 int main(void)
 {
 	uint8_t	bt_debounce = 0;	//used for debounce the button
+
+	RCC->APB1ENR |= RCC_APB1ENR_PWREN;	//enable PWR clock
+
 	/*							   *
 	 * --- GPIO INITIALIZATION --- *
 	 *							   */
@@ -28,8 +31,25 @@ int main(void)
 		{
 			if(bt_debounce++==200)
 			{
-				(GPIOA->ODR ^=GPIO_IDR_ID7_Msk);
 				while(!(GPIOA->IDR & GPIO_IDR_ID10_Msk));
+				(GPIOA->ODR ^=GPIO_IDR_ID7_Msk);
+
+				//entering stop mode procedure
+				DBGMCU->CR |= DBGMCU_CR_DBG_STOP;	//this bit needs to be set if you're going to debug this code
+
+				if(PWR->CSR & PWR_CSR_WUF)
+				{
+					PWR->CR |= PWR_CR_CWUF;		//clears WUF after 2 system clock cycles
+				}
+
+				PWR->CR |= 	PWR_CR_LPSDSR	|	//voltage regulator in low-power mode
+							PWR_CR_ULP		;	//ultra low power mode enable
+				//LPSDSR bit must be set before the LPRUN bit is set
+				PWR->CR |=	PWR_CR_LPRUN;		//voltage regulator in low-power mode
+
+				PWR->CR &= ~PWR_CR_PDDS;		//making sure we're entering stop mode
+
+				__WFE();
 			}
 		}
 		else
