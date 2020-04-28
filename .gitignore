@@ -51,7 +51,7 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-#ignore all .DS_Store files (Finder)
+#ignore .DS_Store files (Finder files)
 .DS_Store
 
 #ignore all files in any directory named Debug
