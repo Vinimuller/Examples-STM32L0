@@ -49,11 +49,6 @@ int main(void)
 		else
 		{
 			GPIOA->ODR |= GPIO_ODR_OD7_Msk;
-
-			if(EXTI->PR & EXTI_PR_PIF10)
-			{
-				EXTI->PR |= EXTI_PR_PIF10;
-			}
 		}
 	}
 
@@ -87,6 +82,9 @@ void MCU_Init(void)
 	GPIOA->MODER &= ~GPIO_MODER_MODE7_1;
 	GPIOA->BSRR |= GPIO_BSRR_BR_7;
 	GPIOA->ODR |= GPIO_ODR_OD7_Msk;
+
+	flag_EXTI = 0;
+	EXTI->PR |= EXTI_PR_PIF10;
 }
 
 /*
