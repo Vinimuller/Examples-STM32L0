@@ -26,6 +26,10 @@ int main(void)
 			GPIOA->ODR &= ~GPIO_ODR_OD7_Msk;
 			while(!(GPIOA->IDR & GPIO_IDR_ID10_Msk));
 
+			ADC1->CR |= ADC_CR_ADDIS;
+			DAC1->CR &= ~(	DAC_CR_EN1 	|
+							DAC_CR_EN2)	;
+
 			//entering stop mode procedure
 			DBGMCU->CR |= DBGMCU_CR_DBG_STOP;	//this bit needs to be set if you're going to debug this code
 
@@ -40,11 +44,18 @@ int main(void)
 			PWR->CR |=	PWR_CR_LPRUN;		//voltage regulator in low-power mode
 
 			PWR->CR &= ~PWR_CR_PDDS;		//making sure we're entering stop mode
-			SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk; // low-power mode = stop mode
+			SCB->SCR = SCB_SCR_SLEEPDEEP_Msk; // low-power mode = stop mode
+
+			EXTI->PR |= EXTI_PR_PIF10;
 
 			__WFI();
 
 			MCU_Init();
+
+			flag_EXTI = 0;
+			EXTI->PR |= EXTI_PR_PIF10;
+
+			while(!(GPIOA->IDR & GPIO_IDR_ID10_Msk));	//holds here (for wake from stop mode)
 		}
 		else
 		{
@@ -82,9 +93,6 @@ void MCU_Init(void)
 	GPIOA->MODER &= ~GPIO_MODER_MODE7_1;
 	GPIOA->BSRR |= GPIO_BSRR_BR_7;
 	GPIOA->ODR |= GPIO_ODR_OD7_Msk;
-
-	flag_EXTI = 0;
-	EXTI->PR |= EXTI_PR_PIF10;
 }
 
 /*
