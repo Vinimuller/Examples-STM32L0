@@ -40,8 +40,7 @@ int main(void)
 	ADC1->CR 		|=	ADC_CR_ADVREGEN;		//enables the voltage regulator
 	ADC1->CFGR2 	|= 	ADC_CFGR2_CKMODE_0;		//sets ADC clock as PCLK/2
 	ADC->CCR 		|= 	ADC_CCR_LFMEN;			//low frequency mode enable
-	ADC1->SMPR 		|= 	ADC_SMPR_SMPR_1	|		//sets sample time for 12.5 ADC clock cycles
-						ADC_SMPR_SMPR_0	;		//because we need 10.5 ADC clock cycles at least
+	ADC1->SMPR 		|= 	ADC_SMPR_SMPR_2;		//sets sample time for 19.5 ADC clock cycles (14 needed)
 	ADC1->CFGR1		|=	ADC_CFGR1_WAIT;			//enables wait mode to prevent overrun
 
 	ADC1->CR |= ADC_CR_ADCAL;					//starting the calibration
