@@ -77,31 +77,32 @@ int main(void)
 	ADC1->CR |= ADC_CR_ADEN;						//then we enable the ADC
 	while(!(ADC1->ISR & ADC_ISR_ADRDY));			//and wait for it to be ready. (Can be handled by interrupt)
 
+	ADC1->CR |= ADC_CR_ADSTART;						//starts the ADC
 	while(1)
 	{
-		ADC1->CR |= ADC_CR_ADSTART;						//starts the ADC
-
 		//we wait for the ADC and DMA to complete the process
-		while(!(ADC1->ISR & ADC_ISR_EOS) && !(DMA1->ISR & DMA_ISR_TCIF1)){}
-		wait(TIME_10uSEC);				//10 uS delay
-		ADC1->ISR &= ~ADC_ISR_EOS;		//clear EOS flag
-		DMA1->ISR &= ~DMA_ISR_TCIF1;	//clear TC flag
+		if((ADC1->ISR & ADC_ISR_EOS) && (DMA1->ISR & DMA_ISR_TCIF1))
+		{
+			//now the ADC finished the conversion of all channels and DMA transferred all the data to ADC_measure struct
+			ADC1->ISR |= ADC_ISR_EOS;		//clear EOS flag
+			DMA1->ISR &= ~DMA_ISR_TCIF1;	//clear TC flag
 
-		//now the ADC finished the conversion of all channels and DMA transferred all the data to ADC_measure struct
+			//Vref calculation as in RM
+			aux = ADC_measure.v_ref;
+			ADC_measure.v_ref = (3 * (int32_t) (*VREFINT_CAL));
+			ADC_measure.v_ref = (ADC_measure.v_ref * 1000) / aux;	//*1000 so we have Vref in mV
+																	//the calculated internal reference voltage is now stored in v_ref
 
-		//Vref calculation as in RM
-		aux = ADC_measure.v_ref;
-		ADC_measure.v_ref = (3 * (int32_t) (*VREFINT_CAL));
-		ADC_measure.v_ref = (ADC_measure.v_ref * 1000) / aux;	//*1000 so we have Vref in mV
-																//the calculated internal reference voltage is now stored in v_ref
+			//temperature calculation as in RM example
+			ADC_measure.temperature = ((ADC_measure.temperature * VDD_APPLI / VDD_CALIB) - (int32_t) *TEMP30_CAL_ADDR);
+			ADC_measure.temperature = ADC_measure.temperature * (int32_t)(130 - 30);
+			ADC_measure.temperature = ADC_measure.temperature / (int32_t)(*TEMP130_CAL_ADDR - *TEMP30_CAL_ADDR);
+			ADC_measure.temperature = ADC_measure.temperature + 30;	//the calculated temperature is now stored in temperature
 
-		//temperature calculation as in RM example
-		ADC_measure.temperature = ((ADC_measure.temperature * VDD_APPLI / VDD_CALIB) - (int32_t) *TEMP30_CAL_ADDR);
-		ADC_measure.temperature = ADC_measure.temperature * (int32_t)(130 - 30);
-		ADC_measure.temperature = ADC_measure.temperature / (int32_t)(*TEMP130_CAL_ADDR - *TEMP30_CAL_ADDR);
-		ADC_measure.temperature = ADC_measure.temperature + 30;	//the calculated temperature is now stored in temperature
+			asm("nop");		//so we can hold the uC here after reading the temperature and Vref
 
-		asm("nop");		//so we can hold the uC here after reading the temperature and Vref
+			ADC1->CR |= ADC_CR_ADSTART;						//starts the ADC
+		}
 	}
 
 	return 0;
