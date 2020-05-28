@@ -1,6 +1,9 @@
 #include "stm32l053xx.h"
 
-uint8_t flag_EXTI = 0;
+#define BUTTON_DEBOUNCE	50
+
+uint8_t flag_EXTI 		= 0,
+		user_bt_count	= 0;	//counter to debounce the button
 
 void MCU_Init(void);
 
@@ -21,45 +24,44 @@ int main(void)
 	{
 		if(flag_EXTI)
 		{
-			flag_EXTI = 0;
-
-			GPIOA->ODR &= ~GPIO_ODR_OD7_Msk;
-			while(!(GPIOA->IDR & GPIO_IDR_ID10_Msk));
-
-			ADC1->CR |= ADC_CR_ADDIS;
-			DAC1->CR &= ~(	DAC_CR_EN1 	|
-							DAC_CR_EN2)	;
-
-			//entering stop mode procedure
-			DBGMCU->CR |= DBGMCU_CR_DBG_STOP;	//this bit needs to be set if you're going to debug this code
-
-			if(PWR->CSR & PWR_CSR_WUF)
+			if(user_bt_count < 250)					//limits the counting to 250
 			{
-				PWR->CR |= PWR_CR_CWUF;		//clears WUF after 2 system clock cycles
+				user_bt_count++;					//counts up for debouncing
 			}
 
-			PWR->CR |= 	PWR_CR_LPSDSR	|	//voltage regulator in low-power mode
-						PWR_CR_ULP		;	//ultra low power mode enable
-			//LPSDSR bit must be set before the LPRUN bit is set
-			PWR->CR |=	PWR_CR_LPRUN;		//voltage regulator in low-power mode
+			if(user_bt_count == BUTTON_DEBOUNCE)
+			{
 
-			PWR->CR &= ~PWR_CR_PDDS;		//making sure we're entering stop mode
-			SCB->SCR = SCB_SCR_SLEEPDEEP_Msk; // low-power mode = stop mode
+				GPIOA->ODR &= ~GPIO_ODR_OD7_Msk;
 
-			EXTI->PR |= EXTI_PR_PIF10;
+				//entering stop mode procedure
+				DBGMCU->CR |= DBGMCU_CR_DBG_STOP;	//this bit needs to be set if you're going to debug this code
 
-			__WFI();
+				PWR->CR |= PWR_CR_CWUF;		//clears WUF after 2 system clock cycles
+				PWR->CR |= 	PWR_CR_LPSDSR	|	//voltage regulator in low-power mode
+							PWR_CR_ULP		;	//ultra low power mode enable
+				//LPSDSR bit must be set before the LPRUN bit is set
+				PWR->CR |=	PWR_CR_LPRUN;		//voltage regulator in low-power mode
 
-			MCU_Init();
+				PWR->CR &= ~PWR_CR_PDDS;		//making sure we're entering stop mode
+				SCB->SCR = SCB_SCR_SLEEPDEEP_Msk; // low-power mode = stop mode
 
-			flag_EXTI = 0;
-			EXTI->PR |= EXTI_PR_PIF10;
+				EXTI->PR |= EXTI_PR_PIF10;
 
-			while(!(GPIOA->IDR & GPIO_IDR_ID10_Msk));	//holds here (for wake from stop mode)
+				__WFI();
+
+				MCU_Init();
+
+				flag_EXTI = 0;
+				EXTI->PR |= EXTI_PR_PIF10;
+
+				while(!(GPIOA->IDR & GPIO_IDR_ID10_Msk));	//holds here (for wake from stop mode)
+			}
 		}
 		else
 		{
 			GPIOA->ODR |= GPIO_ODR_OD7_Msk;
+			user_bt_count=0;
 		}
 	}
 
