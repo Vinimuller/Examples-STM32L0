@@ -31,22 +31,22 @@ int main(void)
 
 			if(user_bt_count == BUTTON_DEBOUNCE)
 			{
-
+				while(!(GPIOA->IDR & GPIO_IDR_ID10_Msk));	//holds here (for wake from stop mode)
 				GPIOA->ODR &= ~GPIO_ODR_OD7_Msk;
 
-				//entering stop mode procedure
-				DBGMCU->CR |= DBGMCU_CR_DBG_STOP;	//this bit needs to be set if you're going to debug this code
 
+				EXTI->PR |= EXTI_PR_PIF10;
+				SCB->SCR = SCB_SCR_SLEEPDEEP_Msk; // low-power mode = stop mode
+				PWR->CR &= ~PWR_CR_PDDS;		//making sure we're entering stop mode
 				PWR->CR |= PWR_CR_CWUF;		//clears WUF after 2 system clock cycles
+
 				PWR->CR |= 	PWR_CR_LPSDSR	|	//voltage regulator in low-power mode
 							PWR_CR_ULP		;	//ultra low power mode enable
 				//LPSDSR bit must be set before the LPRUN bit is set
 				PWR->CR |=	PWR_CR_LPRUN;		//voltage regulator in low-power mode
 
-				PWR->CR &= ~PWR_CR_PDDS;		//making sure we're entering stop mode
-				SCB->SCR = SCB_SCR_SLEEPDEEP_Msk; // low-power mode = stop mode
-
-				EXTI->PR |= EXTI_PR_PIF10;
+				//entering stop mode procedure
+//				DBGMCU->CR |= DBGMCU_CR_DBG_STOP;	//this bit needs to be set if you're going to debug this code
 
 				__WFI();
 
