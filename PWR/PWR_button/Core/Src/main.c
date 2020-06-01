@@ -29,9 +29,9 @@ int main(void)
 				user_bt_count++;					//counts up for debouncing
 			}
 
-			if(user_bt_count == BUTTON_DEBOUNCE)
+			if((user_bt_count >= BUTTON_DEBOUNCE) && (GPIOA->IDR & GPIO_IDR_ID10_Msk))
 			{
-				while(!(GPIOA->IDR & GPIO_IDR_ID10_Msk));	//holds here (for wake from stop mode)
+				//while(!(GPIOA->IDR & GPIO_IDR_ID10_Msk));	//holds here (for wake from stop mode)
 				GPIOA->ODR &= ~GPIO_ODR_OD7_Msk;
 
 
@@ -50,12 +50,13 @@ int main(void)
 
 				__WFI();
 
+				while(!(GPIOA->IDR & GPIO_IDR_ID10_Msk));	//holds here (for wake from stop mode)
+
 				MCU_Init();
 
 				flag_EXTI = 0;
 				EXTI->PR |= EXTI_PR_PIF10;
 
-				while(!(GPIOA->IDR & GPIO_IDR_ID10_Msk));	//holds here (for wake from stop mode)
 			}
 		}
 		else
