@@ -27,11 +27,14 @@ int main(void)
 	 * --- DMA INITIALIZATION --- *
 	 *							  */
 	RCC->AHBENR |= RCC_AHBENR_DMAEN;
-	DMA1_Channel1->CPAR	= 	(uint32_t) &(ADC1->DR);		//setting peripheral address
-	DMA1_Channel1->CCR 	|=	DMA_CCR_CIRC	|			//DMA in circular mode
-							DMA_CCR_MINC	|			//memory increment
-							DMA_CCR_PSIZE_0	|			//peripheral size set to 16 bits
-							DMA_CCR_MSIZE_0	;			//memory size set to 16 bits
+	DMA1_Channel1->CPAR	 = 	(uint32_t) &(ADC1->DR);				//setting peripheral address
+	DMA1_Channel1->CMAR  = 	(uint32_t) &(ADC_measure.v_ref);	//set the first memory register address
+	DMA1_Channel1->CNDTR = 	2; 									//number of data to be transferred
+	DMA1_Channel1->CCR 	|=	DMA_CCR_CIRC	|					//DMA in circular mode
+							DMA_CCR_MINC	|					//memory increment
+							DMA_CCR_PSIZE_0	|					//peripheral size set to 16 bits
+							DMA_CCR_MSIZE_0	;					//memory size set to 16 bits
+	DMA1_Channel1->CCR 	|= 	DMA_CCR_EN;							//enables the DMA
 
 	/*										*
 	 * --- ADC INITIALIZATION PROCEDURE --- *
@@ -69,10 +72,6 @@ int main(void)
 	ADC->CCR 	|= 	ADC_CCR_VREFEN	| 				//enables internal reference voltage
 					ADC_CCR_TSEN	; 				//and temperature sensor
 	wait(TIME_10uSEC);								//we have to wait for the proper time for the Tsense to wake up
-
-	DMA1_Channel1->CNDTR = 2; 								//number of data to be transferred
-	DMA1_Channel1->CMAR = (uint32_t) &(ADC_measure.v_ref);	//set the first memory register address for DMA
-	DMA1_Channel1->CCR 	|= DMA_CCR_EN;						//enables the DMA
 
 	ADC1->CR |= ADC_CR_ADEN;						//then we enable the ADC
 	while(!(ADC1->ISR & ADC_ISR_ADRDY));			//and wait for it to be ready. (Can be handled by interrupt)
