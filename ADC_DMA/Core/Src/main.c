@@ -80,8 +80,8 @@ int main(void)
 	ADC1->CR |= ADC_CR_ADSTART;						//starts the ADC
 	while(1)
 	{
-		//we wait for the ADC and DMA to complete the process
-		if((ADC1->ISR & ADC_ISR_EOS) && (DMA1->ISR & DMA_ISR_TCIF1))
+		//we wait for the DMA to complete the process (so ADC's completed its process too)
+		if(DMA1->ISR & DMA_ISR_TCIF1)
 		{
 			//now the ADC finished the conversion of all channels and DMA transferred all the data to ADC_measure struct
 			ADC1->ISR |= ADC_ISR_EOS;		//clear EOS flag
