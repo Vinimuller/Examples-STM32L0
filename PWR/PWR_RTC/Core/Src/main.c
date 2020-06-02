@@ -72,6 +72,7 @@ int main(void)
 void MCU_Init(void)
 {
 	RCC->APB1ENR |= RCC_APB1ENR_PWREN;	//enable PWR clock
+	RCC->CSR	 |=	RCC_CSR_RTCSEL_LSI;	//sets LSI as RTC clock source (37 kHz)
 
 	/*							   *
 	 * --- GPIO INITIALIZATION --- *
@@ -96,4 +97,18 @@ void MCU_Init(void)
 	GPIOA->MODER &= ~GPIO_MODER_MODE7_1;
 	GPIOA->BSRR |= GPIO_BSRR_BR_7;
 	GPIOA->ODR |= GPIO_ODR_OD7_Msk;
+
+	/*							   *
+	 *  --- RTC INITIALIZATION --- *
+	 *							   */
+	PWR->CR |=	PWR_CR_DBP;				//enable write access to the RTC
+	// --- Unlocking RTC's write protection
+	RTC->WPR = 0xCA;
+	RTC->WPR = 0x53;
+	// --- RTC's unlocked
+	RTC->CR &= ~RTC_CR_WUTE;			//disables the wakeup timer
+	while(!(RTC->ISR & RTC_ISR_WUTWF));	//polling WUTWF until it is set
+	RTC->WUTR = 30;						//wakeup timer set to 30 seconds
+	RTC->CR |= RTC_CR_WUCKSEL_2;		//WUCKSEL = 10x: ck_spre (usually 1 Hz) clock selected
+	RTC->CR |= RTC_CR_WUTE;				//enables RTC
 }
