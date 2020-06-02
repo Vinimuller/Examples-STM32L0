@@ -85,7 +85,7 @@ int main(void)
 		{
 			//now the ADC finished the conversion of all channels and DMA transferred all the data to ADC_measure struct
 			ADC1->ISR |= ADC_ISR_EOS;		//clear EOS flag
-			DMA1->ISR &= ~DMA_ISR_TCIF1;	//clear TC flag
+			DMA1->IFCR |= DMA_IFCR_CGIF1;	//clear TC flag
 
 			//Vref calculation as in RM
 			aux = ADC_measure.v_ref;
