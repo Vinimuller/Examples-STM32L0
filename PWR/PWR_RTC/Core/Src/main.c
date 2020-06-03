@@ -72,7 +72,6 @@ int main(void)
 void MCU_Init(void)
 {
 	RCC->APB1ENR |= RCC_APB1ENR_PWREN;	//enable PWR clock
-	RCC->CSR	 |=	RCC_CSR_RTCSEL_LSI;	//sets LSI as RTC clock source (37 kHz)
 
 	/*							   *
 	 * --- GPIO INITIALIZATION --- *
@@ -101,6 +100,9 @@ void MCU_Init(void)
 	/*							   *
 	 *  --- RTC INITIALIZATION --- *
 	 *							   */
+	RCC->CSR	|=	RCC_CSR_RTCSEL_LSI;	//sets LSI as RTC clock source (37 kHz)
+	RCC->CSR	|=	RCC_CSR_RTCEN;		//enables the RTC clock
+
 	PWR->CR |=	PWR_CR_DBP;				//enable write access to the RTC
 	// --- Unlocking RTC's write protection
 	RTC->WPR = 0xCA;
