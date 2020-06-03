@@ -1,5 +1,15 @@
 #include "stm32l053xx.h"
 
+//------ DEFINES
+//--- INPUTS
+#define USR_BT_PRESS		(!(GPIOA->IDR & GPIO_IDR_ID10_Msk))
+
+//--- OUTPUTS
+#define GREEN_LED_ON		(GPIOA->ODR |= GPIO_ODR_OD7_Msk)
+#define	GREEN_LED_OFF		(GPIOA->ODR &= ~GPIO_ODR_OD7_Msk)
+#define TOGGLE_GREEN_LED	(GPIOA->ODR ^=GPIO_IDR_ID7_Msk)
+
+//--- GENERAL
 #define BUTTON_DEBOUNCE	50
 
 uint8_t flag_EXTI 		= 0,
@@ -29,9 +39,9 @@ int main(void)
 				user_bt_count++;					//counts up for debouncing
 			}
 
-			if((user_bt_count >= BUTTON_DEBOUNCE) && (GPIOA->IDR & GPIO_IDR_ID10_Msk))
+			if((user_bt_count >= BUTTON_DEBOUNCE) && (!USR_BT_PRESS))
 			{
-				GPIOA->ODR &= ~GPIO_ODR_OD7_Msk;	//turn the green led off
+				GREEN_LED_OFF;						//turn the green led off
 				EXTI->PR |= EXTI_PR_PIF10;			//clears EXTI flag again before entering stop mode
 
 				SCB->SCR = SCB_SCR_SLEEPDEEP_Msk; 	//low-power mode = stop mode
@@ -46,9 +56,9 @@ int main(void)
 
 				__WFI();	//stop mode
 
-				while(!(GPIOA->IDR & GPIO_IDR_ID10_Msk));	//holds here to wake up from stop mode (doesn't enter in IRQ handler)
+				while(USR_BT_PRESS);	//holds here to wake up from stop mode (doesn't enter in IRQ handler)
 
-				//MCU_Init();
+				GREEN_LED_ON;
 
 				flag_EXTI = 0;						//clear EXTI flag after waking up
 				EXTI->PR |= EXTI_PR_PIF10;			//clear EXTI flag after waking up (may be set since we pressed the button)
@@ -91,7 +101,7 @@ void MCU_Init(void)
 	//Green led, debug purpose
 	GPIOA->MODER &= ~GPIO_MODER_MODE7_1;
 	GPIOA->BSRR |= GPIO_BSRR_BR_7;
-	GPIOA->ODR |= GPIO_ODR_OD7_Msk;
+	GREEN_LED_ON;
 }
 
 /*
