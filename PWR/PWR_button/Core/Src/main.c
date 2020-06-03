@@ -42,17 +42,6 @@ int main(void)
 			if((user_bt_count >= BUTTON_DEBOUNCE) && (!USR_BT_PRESS))
 			{
 				GREEN_LED_OFF;						//turn the green led off
-				EXTI->PR |= EXTI_PR_PIF10;			//clears EXTI flag again before entering stop mode
-
-				SCB->SCR = SCB_SCR_SLEEPDEEP_Msk; 	//low-power mode = stop mode
-				PWR->CR &= ~PWR_CR_PDDS;			//making sure we're entering stop mode
-				PWR->CR |= PWR_CR_CWUF;				//clears WUF after 2 system clock cycles
-
-				PWR->CR |= 	PWR_CR_LPSDSR	|		//voltage regulator in low-power mode
-							PWR_CR_ULP		;		//ultra low power mode enable
-
-				//entering stop mode procedure
-//				DBGMCU->CR |= DBGMCU_CR_DBG_STOP;	//this bit needs to be set if you're going to debug this code
 
 				__WFI();	//stop mode
 
@@ -67,7 +56,6 @@ int main(void)
 		}
 		else
 		{
-			GPIOA->ODR |= GPIO_ODR_OD7_Msk;			//turn on the led
 			user_bt_count=0;						//reset debouncer counter
 		}
 	}
@@ -102,6 +90,18 @@ void MCU_Init(void)
 	GPIOA->MODER &= ~GPIO_MODER_MODE7_1;
 	GPIOA->BSRR |= GPIO_BSRR_BR_7;
 	GREEN_LED_ON;
+
+	/*									*
+	 * --- STOP MODE INITIALIZATION --- *
+	 *									*/
+	SCB->SCR = SCB_SCR_SLEEPDEEP_Msk; 	//low-power mode = stop mode
+	PWR->CR &= ~PWR_CR_PDDS;			//making sure we're entering stop mode
+	PWR->CR |= PWR_CR_CWUF		|		//clears WUF after 2 system clock cycles
+				PWR_CR_LPSDSR	|		//voltage regulator in low-power mode
+				PWR_CR_ULP		;		//ultra low power mode enable
+
+	//entering stop mode procedure
+	DBGMCU->CR |= DBGMCU_CR_DBG_STOP;	//this bit needs to be set if you're going to debug this code
 }
 
 /*
