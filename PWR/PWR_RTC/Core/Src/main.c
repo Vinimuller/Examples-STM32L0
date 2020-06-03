@@ -1,5 +1,15 @@
 #include "stm32l053xx.h"
 
+//------ DEFINES
+//--- INPUTS
+#define USR_BT_PRESS		(!(GPIOA->IDR & GPIO_IDR_ID10_Msk))
+
+//--- OUTPUTS
+#define GREEN_LED_ON		(GPIOA->ODR |= GPIO_ODR_OD7_Msk)
+#define	GREEN_LED_OFF		(GPIOA->ODR &= ~GPIO_ODR_OD7_Msk)
+#define TOGGLE_GREEN_LED	(GPIOA->ODR ^=GPIO_IDR_ID7_Msk)
+
+//--- GENERAL
 #define BUTTON_DEBOUNCE	50
 
 uint8_t flag_EXTI 		= 0,
@@ -7,31 +17,22 @@ uint8_t flag_EXTI 		= 0,
 
 void MCU_Init(void);
 
-void EXTI4_15_IRQHandler (void)
-{
-	if(EXTI->PR & EXTI_PR_PIF10)	//if there's EXTI interrupt
-	{
-		flag_EXTI = 1;
-		EXTI->PR |= EXTI_PR_PIF10;	//clears the EXTI flag
-	}
-}
-
 int main(void)
 {
 	MCU_Init();
 
 	while(1)
 	{
-		if(flag_EXTI)
+		if(USR_BT_PRESS)
 		{
 			if(user_bt_count < 250)					//limits the counting to 250
 			{
 				user_bt_count++;					//counts up for debouncing
 			}
 
-			if((user_bt_count >= BUTTON_DEBOUNCE) && (GPIOA->IDR & GPIO_IDR_ID10_Msk))
+			if((user_bt_count >= BUTTON_DEBOUNCE) && !(USR_BT_PRESS))
 			{
-				GPIOA->ODR &= ~GPIO_ODR_OD7_Msk;
+				GREEN_LED_OFF;
 				EXTI->PR |= EXTI_PR_PIF10;
 
 				SCB->SCR = SCB_SCR_SLEEPDEEP_Msk; 	// low-power mode = stop mode
@@ -68,7 +69,7 @@ int main(void)
 		}
 		else
 		{
-			GPIOA->ODR |= GPIO_ODR_OD7_Msk;
+			GREEN_LED_ON;
 			user_bt_count=0;
 		}
 	}
@@ -93,16 +94,10 @@ void MCU_Init(void)
 
 	GPIOA->MODER &=	~GPIO_MODER_MODE10_Msk;
 	GPIOA->PUPDR |= GPIO_PUPDR_PUPD10_0;
-	EXTI->IMR	|= EXTI_IMR_IM10;
-	EXTI->FTSR	|= EXTI_FTSR_FT10;
-
-	NVIC_EnableIRQ(EXTI4_15_IRQn);
-	NVIC_SetPriority(EXTI4_15_IRQn, 0);
 
 	//Green led, debug purpose
 	GPIOA->MODER &= ~GPIO_MODER_MODE7_1;
 	GPIOA->BSRR |= GPIO_BSRR_BR_7;
-	GPIOA->ODR |= GPIO_ODR_OD7_Msk;
 
 	/*							   *
 	 *  --- RTC INITIALIZATION --- *
