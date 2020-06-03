@@ -40,8 +40,6 @@ int main(void)
 
 				PWR->CR |= 	PWR_CR_LPSDSR	|		//voltage regulator in low-power mode
 							PWR_CR_ULP		;		//ultra low power mode enable
-				//LPSDSR bit must be set before the LPRUN bit is set
-				PWR->CR |=	PWR_CR_LPRUN;			//voltage regulator in low-power mode
 
 				//entering stop mode procedure
 //				DBGMCU->CR |= DBGMCU_CR_DBG_STOP;	//this bit needs to be set if you're going to debug this code
