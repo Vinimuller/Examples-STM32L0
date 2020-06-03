@@ -52,27 +52,16 @@ int main(void)
 	ADC1->CFGR1	|=	ADC_CFGR1_DMACFG |			//DMA in circular mode
 					ADC_CFGR1_DMAEN	;			//enables DMA	- must be done AFTER calibrate the AD
 
-	ADC1->ISR|= ADC_ISR_ADRDY;					//clear the ADRDY bit by programming it to 1
-	ADC1->CR |= ADC_CR_ADEN;					//then we enable the ADC
-	while(!(ADC1->ISR & ADC_ISR_ADRDY));		//and wait for it to be ready (Can be handled by interrupt)
-
 	/*												*
 	 * --- ADC CHANNEL CONFIG FOR V_REF READING --- *
 	 *												*/
-	if(ADC1->CR & ADC_CR_ADSTART)					//we have to be sure there's no ongoing conversion
-	{
-		ADC1->CR |= ADC_CR_ADSTP;					//if so, we have to set ADSTP bit
-		while(ADC1->CR & ADC_CR_ADSTP);				//and wait for it to clear
-	}
-	ADC1->CR |= ADC_CR_ADDIS;						//disables the ADC
-	while(ADC1->CR & ADC_CR_ADEN);
-
 	ADC1->CHSELR = 	ADC_CHSELR_CHSEL17	|			//selecting the VREF channel
 					ADC_CHSELR_CHSEL18	;			//and Tsense channel
 	ADC->CCR 	|= 	ADC_CCR_VREFEN	| 				//enables internal reference voltage
 					ADC_CCR_TSEN	; 				//and temperature sensor
 	wait(TIME_10uSEC);								//we have to wait for the proper time for the Tsense to wake up
 
+	ADC1->ISR|= ADC_ISR_ADRDY;					//clear the ADRDY bit by programming it to 1
 	ADC1->CR |= ADC_CR_ADEN;						//then we enable the ADC
 	while(!(ADC1->ISR & ADC_ISR_ADRDY));			//and wait for it to be ready. (Can be handled by interrupt)
 
