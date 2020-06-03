@@ -47,12 +47,13 @@ int main(void)
 				//entering stop mode procedure
 //				DBGMCU->CR |= DBGMCU_CR_DBG_STOP;	//this bit needs to be set if you're going to debug this code
 
-				PWR->CR |=	PWR_CR_DBP;				//enable write access to the RTC registers
-				// --- Unlocking RTC's write protection
-				RTC->WPR = 0xCA;
-				RTC->WPR = 0x53;
-				// --- RTC's unlocked
+//				PWR->CR |=	PWR_CR_DBP;				//enable write access to the RTC registers
+//				// --- Unlocking RTC's write protection
+//				RTC->WPR = 0xCA;
+//				RTC->WPR = 0x53;
+//				// --- RTC's unlocked
 				RTC->CR |= RTC_CR_WUTE;				//enables RTC - starts counting
+				asm("nop");
 
 				__WFI();	//stop mode
 
@@ -102,14 +103,16 @@ void MCU_Init(void)
 	/*							   *
 	 *  --- RTC INITIALIZATION --- *
 	 *							   */
-	RCC->CSR	|=	RCC_CSR_RTCSEL_LSI;		//sets LSI as RTC clock source (37 kHz)
-	RCC->CSR	|=	RCC_CSR_RTCEN;			//enables the RTC clock
+	RCC->APB1ENR |= RCC_APB1ENR_PWREN;
 
 	PWR->CR |=	PWR_CR_DBP;					//enable write access to the RTC registers
 	// --- Unlocking RTC's write protection
 	RTC->WPR = 0xCA;
 	RTC->WPR = 0x53;
 	// --- RTC's unlocked
+	RCC->CSR |=	RCC_CSR_RTCSEL_LSI;		//sets LSI as RTC clock source (37 kHz)
+	RCC->CSR |=	RCC_CSR_RTCEN;			//enables the RTC clock
+
 	RTC->CR &= ~RTC_CR_WUTE;				//disables the wakeup timer
 	while(!(RTC->ISR & RTC_ISR_WUTWF));		//polling WUTWF until it is set
 	RTC->WUTR 	= 	30;						//wakeup timer set to 30 seconds
