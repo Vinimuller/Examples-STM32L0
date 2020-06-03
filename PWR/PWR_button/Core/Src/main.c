@@ -48,7 +48,7 @@ int main(void)
 
 				while(!(GPIOA->IDR & GPIO_IDR_ID10_Msk));	//holds here to wake up from stop mode (doesn't enter in IRQ handler)
 
-				MCU_Init();
+				//MCU_Init();
 
 				flag_EXTI = 0;						//clear EXTI flag after waking up
 				EXTI->PR |= EXTI_PR_PIF10;			//clear EXTI flag after waking up (may be set since we pressed the button)
