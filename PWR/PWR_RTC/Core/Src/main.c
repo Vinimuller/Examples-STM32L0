@@ -46,9 +46,20 @@ int main(void)
 					GREEN_LED_OFF;				//turn the green led off
 					UsrBtStatus = RELEASED;		//set user button status as RELEASED
 
-					RTC->CR |= RTC_CR_WUTE;		//enables RTC - starts counting
-					asm("nop");
+					PWR->CR  |=	PWR_CR_DBP;						//enable write access to the RTC and RCC CSR registers
+					// --- Unlocking RTC's write protection
+					RTC->WPR = 0xCA;
+					RTC->WPR = 0x53;
+					// --- RTC's unlocked
 
+					RTC->CR |= RTC_CR_WUTE;		//enables RTC - starts counting
+
+					PWR->CR 	&= ~PWR_CR_DBP;					//disable write access to the RTC registers
+					RTC->WPR = 0xFE; /* (6) Disable write access */ //?
+					RTC->WPR = 0x64; /* (6) Disable write access */ //?
+//					RTC->WPR = 0xFF; /*RTC registers can no more be modified*/	//?
+
+					asm("nop");
 					__WFI();					//stop mode
 
 					while(USR_BT_PRESS);		//holds here to wake up from stop mode
@@ -57,7 +68,6 @@ int main(void)
 
 					RTC->ISR &= ~RTC_ISR_WUTF;	//clears RTC wakeup flag
 					FlagEXTI = 0;				//clear FlagEXTI after waking up (it is set since we pressed the button to wake up)
-					EXTI->PR |= EXTI_PR_PIF10;	//clear EXTI flag after waking up (it is set since we pressed the button to wake up)
 				}
 
 			}
@@ -112,32 +122,40 @@ void MCU_Init(void)
 	/*							   *
 	 *  --- RTC INITIALIZATION --- *
 	 *							   */
-	RCC->APB1ENR |= RCC_APB1ENR_PWREN;			//enable PWR clock
+	RCC->CSR |= RCC_CSR_LSION;					//LSI oscillator ON
+	while(!(RCC->CSR & RCC_CSR_LSIRDY));		//poll until LSI is stable
 
-	RCC->CSR |= RCC_CSR_RTCRST;
-	while(!(RCC->CSR & RCC_CSR_RTCRST));
-	RCC->CSR &= ~RCC_CSR_RTCRST;
-	while((RCC->CSR & RCC_CSR_RTCRST));
+//	RCC->CSR |= RCC_CSR_RTCRST;
+//	while(!(RCC->CSR & RCC_CSR_RTCRST));
+//	RCC->CSR &= ~RCC_CSR_RTCRST;
+//	while((RCC->CSR & RCC_CSR_RTCRST));
 
-	PWR->CR |=	PWR_CR_DBP;						//enable write access to the RTC registers
+	PWR->CR  |=	PWR_CR_DBP;						//enable write access to the RTC and RCC CSR registers
+	RCC->CSR |=	RCC_CSR_RTCSEL_LSI	|			//sets LSI as RTC clock source (37 kHz)
+				RCC_CSR_RTCEN		;			//enables the RTC clock (those bits are write protected!)
 	// --- Unlocking RTC's write protection
 	RTC->WPR = 0xCA;
 	RTC->WPR = 0x53;
 	// --- RTC's unlocked
-	RCC->CSR |=	RCC_CSR_RTCSEL_LSI	|			//sets LSI as RTC clock source (37 kHz)
-				RCC_CSR_RTCEN		;			//enables the RTC clock
 	RTC->CR &= ~RTC_CR_WUTE;					//disables the wakeup timer
 	while(!(RTC->ISR & RTC_ISR_WUTWF));			//polling WUTWF until it is set
+	RTC->ISR &= ~RTC_ISR_WUTF;	//clears RTC wakeup flag
+	RTC->ISR |= RTC_ISR_INIT;	//RTC enters initialization mode
+	while(!(RTC->ISR & RTC_ISR_INITF));
 	RTC->PRER = (36 << RTC_PRER_PREDIV_A_Pos);	//sets asynchronous prescaler to 36 (f_apre = 1 kHz)
-	RTC->WUTR = 30000;							//wakeup timer set to 30 seconds
+	RTC->WUTR = 5000;							//wakeup timer set to 30 seconds
 //	EXTI->RTSR 	|= 	EXTI_RTSR_RT20;				//EXTI line 20 sensitive to rising edges (wakeup event)
 	RTC->CR 	|=	RTC_CR_WUCKSEL_1	|		//WUCKSEL = 011: RTC/2
 					RTC_CR_WUCKSEL_0	|		//WUCKSEL = 011: RTC/2
 					RTC_CR_WUTIE		;		//enables periodic wakeup interrupt (to exit from stop mode)
+	RTC->ISR &= ~RTC_ISR_INIT;	//RTC exits initialization mode
+	while(RTC->ISR & RTC_ISR_INITF);
+
 	PWR->CR 	&= ~PWR_CR_DBP;					//disable write access to the RTC registers
-//	RTC->WPR = 0xFE; /* (6) Disable write access */ //?
-//	RTC->WPR = 0x64; /* (6) Disable write access */ //?
+	RTC->WPR = 0xFE; /* (6) Disable write access */ //?
+	RTC->WPR = 0x64; /* (6) Disable write access */ //?
 //	RTC->WPR = 0xFF; /*RTC registers can no more be modified*/	//?
+
 
 //	NVIC_EnableIRQ(RTC_IRQn);
 //	NVIC_SetPriority(RTC_IRQn, 0);
