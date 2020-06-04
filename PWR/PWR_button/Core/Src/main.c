@@ -98,7 +98,7 @@ int main(void)
 				GREEN_LED_ON;						//turn the green led on again
 
 				FlagEXTI = 0;						//clear FlagEXTI after waking up (it is set since we pressed the button to wake up)
-				EXTI->PR |= EXTI_PR_PIF10;			//clear EXTI flag after waking up (it is set since we pressed the button to wake up)
+				//EXTI->PR |= EXTI_PR_PIF10;			//clear EXTI flag after waking up (it is set since we pressed the button to wake up)
 			}
 		}
 	}
