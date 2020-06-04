@@ -94,9 +94,9 @@ void MCU_Init(void)
 	GPIOA->BSRR |= GPIO_BSRR_BR_7;
 	GREEN_LED_ON;
 
-	/*									*
+	/*									   *
 	 * --- STANDBY MODE INITIALIZATION --- *
-	 *									*/
+	 *									   */
 	RCC->APB1ENR |= RCC_APB1ENR_PWREN;	//enable PWR clock
 	SCB->SCR = SCB_SCR_SLEEPDEEP_Msk; 	//low-power mode = stop mode
 	PWR->CR |= PWR_CR_PDDS;				//making sure we're entering standby mode
@@ -110,24 +110,27 @@ void MCU_Init(void)
 	/*							   *
 	 *  --- RTC INITIALIZATION --- *
 	 *							   */
-	RCC->APB1ENR |= RCC_APB1ENR_PWREN;	//enable PWR clock
+	RCC->APB1ENR |= RCC_APB1ENR_PWREN;			//enable PWR clock
+	RCC->CSR 	 |=	RCC_CSR_RTCSEL_LSI	|		//sets LSI as RTC clock source (37 kHz)
+					RCC_CSR_RTCEN		;		//enables the RTC clock
 
-	PWR->CR |=	PWR_CR_DBP;					//enable write access to the RTC registers
+	PWR->CR |=	PWR_CR_DBP;						//enable write access to the RTC registers
 	// --- Unlocking RTC's write protection
 	RTC->WPR = 0xCA;
 	RTC->WPR = 0x53;
 	// --- RTC's unlocked
-	RCC->CSR |=	RCC_CSR_RTCSEL_LSI;		//sets LSI as RTC clock source (37 kHz)
-	RCC->CSR |=	RCC_CSR_RTCEN;			//enables the RTC clock
+	RTC->CR &= ~RTC_CR_WUTE;					//disables the wakeup timer
+	while(!(RTC->ISR & RTC_ISR_WUTWF));			//polling WUTWF until it is set
+	RTC->PRER = (36 << RTC_PRER_PREDIV_A_Pos);	//sets asynchronous prescaler to 36 (f_apre = 1 kHz)
+	RTC->WUTR = 30000;							//wakeup timer set to 30 seconds
+//	EXTI->RTSR 	|= 	EXTI_RTSR_RT20;				//EXTI line 20 sensitive to rising edges (wakeup event)
+	RTC->CR 	|=	RTC_CR_WUCKSEL_1	|		//WUCKSEL = 011: RTC/2
+					RTC_CR_WUCKSEL_0	|		//WUCKSEL = 011: RTC/2
+					RTC_CR_WUTIE		;		//enables periodic wakeup interrupt (to exit from stop mode)
+	PWR->CR 	&= ~PWR_CR_DBP;					//disable write access to the RTC registers
+//	RTC->WPR = 0xFE; /* (6) Disable write access */ //?
+//	RTC->WPR = 0x64; /* (6) Disable write access */ //?
 
-	RTC->CR &= ~RTC_CR_WUTE;				//disables the wakeup timer
-	while(!(RTC->ISR & RTC_ISR_WUTWF));		//polling WUTWF until it is set
-	RTC->WUTR 	= 	30;						//wakeup timer set to 30 seconds
-	EXTI->RTSR 	|= 	EXTI_RTSR_RT20;			//EXTI line 20 sensitive to rising edges (wakeup event)
-	RTC->CR 	|=	RTC_CR_WUCKSEL_2	|	//WUCKSEL = 10x: ck_spre (usually 1 Hz) clock selected
-					RTC_CR_WUTIE		;	//enables periodic wakeup interrupt (to exit from stop mode)
-	PWR->CR 	&= ~PWR_CR_DBP;				//disable write access to the RTC registers
-
-	NVIC_EnableIRQ(RTC_IRQn);
-	NVIC_SetPriority(RTC_IRQn, 0);
+//	NVIC_EnableIRQ(RTC_IRQn);
+//	NVIC_SetPriority(RTC_IRQn, 0);
 }
