@@ -51,12 +51,13 @@ int main(void)
 					RTC->WPR = 0xCA;
 					RTC->WPR = 0x53;
 					// --- RTC's unlocked
-
 					RTC->CR |= RTC_CR_WUTE;		//enables RTC - starts counting
 
-					PWR->CR 	&= ~PWR_CR_DBP;					//disable write access to the RTC registers
-					RTC->WPR = 0xFE; /* (6) Disable write access */ //?
-					RTC->WPR = 0x64; /* (6) Disable write access */ //?
+//					PWR->CR 	&= ~PWR_CR_DBP;					//disable write access to the RTC registers
+//					RTC->ISR &= ~RTC_ISR_WUTF;	//clears RTC wakeup flag (is set when disabling write access)
+//					while(RTC->ISR & RTC_ISR_WUTF);
+//					RTC->WPR = 0xFE; /* (6) Disable write access */ //?
+//					RTC->WPR = 0x64; /* (6) Disable write access */ //?
 //					RTC->WPR = 0xFF; /*RTC registers can no more be modified*/	//?
 
 					asm("nop");
@@ -143,17 +144,16 @@ void MCU_Init(void)
 	RTC->ISR |= RTC_ISR_INIT;	//RTC enters initialization mode
 	while(!(RTC->ISR & RTC_ISR_INITF));
 	RTC->PRER = (36 << RTC_PRER_PREDIV_A_Pos);	//sets asynchronous prescaler to 36 (f_apre = 1 kHz)
-	RTC->WUTR = 5000;							//wakeup timer set to 30 seconds
+	RTC->WUTR = 65535;							//wakeup timer set to 30 seconds
 //	EXTI->RTSR 	|= 	EXTI_RTSR_RT20;				//EXTI line 20 sensitive to rising edges (wakeup event)
-	RTC->CR 	|=	RTC_CR_WUCKSEL_1	|		//WUCKSEL = 011: RTC/2
-					RTC_CR_WUCKSEL_0	|		//WUCKSEL = 011: RTC/2
-					RTC_CR_WUTIE		;		//enables periodic wakeup interrupt (to exit from stop mode)
+	RTC->CR		&=	~RTC_CR_WUCKSEL_Msk;		//RTC/16
+	RTC->CR 	|=	RTC_CR_WUTIE		;		//enables periodic wakeup interrupt (to exit from stop mode)
 	RTC->ISR &= ~RTC_ISR_INIT;	//RTC exits initialization mode
 	while(RTC->ISR & RTC_ISR_INITF);
 
 	PWR->CR 	&= ~PWR_CR_DBP;					//disable write access to the RTC registers
-	RTC->WPR = 0xFE; /* (6) Disable write access */ //?
-	RTC->WPR = 0x64; /* (6) Disable write access */ //?
+//	RTC->WPR = 0xFE; /* (6) Disable write access */ //?
+//	RTC->WPR = 0x64; /* (6) Disable write access */ //?
 //	RTC->WPR = 0xFF; /*RTC registers can no more be modified*/	//?
 
 
