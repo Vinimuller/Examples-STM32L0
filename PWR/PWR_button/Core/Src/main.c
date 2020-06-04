@@ -41,19 +41,19 @@ int main(void)
 	 * PA13 -> AF mode (SWD_CK)		| Low speed	| Push pull
 	 * PA10	-> Input (User Button)	| Low speed	| Pull-up
 	 */
-	RCC->IOPENR	 |=	RCC_IOPENR_GPIOAEN;
+	RCC->IOPENR	 |=	RCC_IOPENR_GPIOAEN;		//enable GPIOA clock
 
-	GPIOA->MODER &=	~GPIO_MODER_MODE10_Msk;
-	GPIOA->PUPDR |= GPIO_PUPDR_PUPD10_0;
-	EXTI->IMR	|= EXTI_IMR_IM10;
-	EXTI->FTSR	|= EXTI_FTSR_FT10;
+	GPIOA->MODER &=	~GPIO_MODER_MODE10_Msk;	//set PA10 as input
+	GPIOA->PUPDR |= GPIO_PUPDR_PUPD10_0;	//enables PA10 pull-up
+	EXTI->IMR	|= EXTI_IMR_IM10;			//interrupt request from Line 10 is not masked
+	EXTI->FTSR	|= EXTI_FTSR_FT10;			//falling trigger enabled for input line 10
 
-	NVIC_EnableIRQ(EXTI4_15_IRQn);
-	NVIC_SetPriority(EXTI4_15_IRQn, 0);
+	NVIC_EnableIRQ(EXTI4_15_IRQn);			//enable EXTI interrupt on NVIC
+	NVIC_SetPriority(EXTI4_15_IRQn, 0);		//set EXTI interrupt priority
 
 	//Green led, debug purpose
-	GPIOA->MODER &= ~GPIO_MODER_MODE7_1;
-	GPIOA->BSRR |= GPIO_BSRR_BR_7;
+	GPIOA->MODER &= ~GPIO_MODER_MODE7_1;	//set PA7 as output
+	GPIOA->BSRR |= GPIO_BSRR_BR_7;			//resets the corresponding OD7 bit
 	GREEN_LED_ON;
 
 	/*									*
