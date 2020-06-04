@@ -14,9 +14,10 @@
 #define RELEASED		0		//user button status define
 #define	PRESSED			1		//user button status define
 
-uint8_t flag_EXTI 		= 0,	//this flag is set when there's an EXTI 10 interrupt
-		USR_BT_STATUS	= 0,	//this var indicates the user button status (RELEASED or PRESSED)
-		user_bt_count	= 0;	//counter to debounce the button
+//------ VARIABLES
+uint8_t FlagEXTI 	= 0,		//this flag is set when there's an EXTI 10 interrupt
+		UsrBtStatus	= 0,		//this var indicates the user button status (RELEASED or PRESSED)
+		UsrBtCount	= 0;		//counter to debounce the button
 
 void MCU_Init(void);
 
@@ -28,41 +29,42 @@ int main(void)
 	{
 		if(USR_BT_PRESS)
 		{
-			if(user_bt_count < 250)						//button debouncing procedure
+			if(UsrBtCount++ >= BUTTON_DEBOUNCE)	//we increment UsrBtCount until it reaches BUTTON_DEBOUNCE value
 			{
-				if(user_bt_count++ >= BUTTON_DEBOUNCE)	//we increment user_bt_count until it reaches BUTTON_DEBOUNCE value
-				{
-					USR_BT_STATUS = PRESSED;			//then we recognize the button is definitely pressed
-					flag_EXTI = 0;						//and clear the flag_EXTI
-				}
-				else
-				{
-					USR_BT_STATUS = RELEASED;			//or the button is not pressed
-				}
+				UsrBtStatus = PRESSED;			//then we recognize the button is definitely pressed
+				FlagEXTI = 0;					//and clear the FlagEXTI
+			}
+			else
+			{
+				UsrBtStatus = RELEASED;			//or the button is not pressed
 			}
 
-			if(USR_BT_STATUS == PRESSED)				//when we recognized the user button was pressed
+			if(UsrBtStatus == PRESSED)			//when we recognized the user button was pressed
 			{
-				if((!USR_BT_PRESS))						//if it was then released, tha uC start taking action
+				if((!USR_BT_PRESS))				//if it was then released, tha uC start taking action
 				{
-					GREEN_LED_OFF;						//turn the green led off
-					USR_BT_STATUS = RELEASED;			//set user button status as RELEASED
+					GREEN_LED_OFF;				//turn the green led off
+					UsrBtStatus = RELEASED;		//set user button status as RELEASED
 
-					RTC->CR |= RTC_CR_WUTE;				//enables RTC - starts counting
+					RTC->CR |= RTC_CR_WUTE;		//enables RTC - starts counting
 					asm("nop");
 
-					__WFI();	//stop mode
+					__WFI();					//stop mode
 
-					while(USR_BT_PRESS);				//holds here to wake up from stop mode
+					while(USR_BT_PRESS);		//holds here to wake up from stop mode
 
-					GREEN_LED_ON;						//turn the green led on again
+					GREEN_LED_ON;				//turn the green led on again
 
-					RTC->ISR &= ~RTC_ISR_WUTF;			//clears RTC wakeup flag
-					flag_EXTI = 0;						//clear flag_EXTI after waking up (it is set since we pressed the button to wake up)
-					EXTI->PR |= EXTI_PR_PIF10;			//clear EXTI flag after waking up (it is set since we pressed the button to wake up)
+					RTC->ISR &= ~RTC_ISR_WUTF;	//clears RTC wakeup flag
+					FlagEXTI = 0;				//clear FlagEXTI after waking up (it is set since we pressed the button to wake up)
+					EXTI->PR |= EXTI_PR_PIF10;	//clear EXTI flag after waking up (it is set since we pressed the button to wake up)
 				}
 
 			}
+		}
+		else
+		{
+			UsrBtCount = 0;
 		}
 	}
 
@@ -79,10 +81,10 @@ void MCU_Init(void)
 	 * PA13 -> AF mode (SWD_CK)		| Low speed	| Push pull
 	 * PA10	-> Input (User Button)	| Low speed	| Pull-up
 	 */
-	RCC->IOPENR	 |=	RCC_IOPENR_GPIOAEN;
+	RCC->IOPENR	 |=	RCC_IOPENR_GPIOAEN;		//enable GPIOA clock
 
-	GPIOA->MODER &=	~GPIO_MODER_MODE10_Msk;
-	GPIOA->PUPDR |= GPIO_PUPDR_PUPD10_0;
+	GPIOA->MODER &=	~GPIO_MODER_MODE10_Msk;	//set PA10 as input
+	GPIOA->PUPDR |= GPIO_PUPDR_PUPD10_0;	//enables PA10 pull-up
 //	EXTI->IMR	|= EXTI_IMR_IM10;
 //	EXTI->FTSR	|= EXTI_FTSR_FT10;
 //
@@ -90,8 +92,8 @@ void MCU_Init(void)
 //	NVIC_SetPriority(EXTI4_15_IRQn, 0);
 
 	//Green led, debug purpose
-	GPIOA->MODER &= ~GPIO_MODER_MODE7_1;
-	GPIOA->BSRR |= GPIO_BSRR_BR_7;
+	GPIOA->MODER &= ~GPIO_MODER_MODE7_1;	//set PA7 as output
+	GPIOA->BSRR |= GPIO_BSRR_BR_7;			//resets the corresponding OD7 bit
 	GREEN_LED_ON;
 
 	/*									   *
