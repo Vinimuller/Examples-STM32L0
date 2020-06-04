@@ -14,19 +14,19 @@
 #define RELEASED		0		//user button status define
 #define	PRESSED			1		//user button status define
 
-uint8_t flag_EXTI 		= 0,	//this flag is set when there's an EXTI 10 interrupt
-		USR_BT_STATUS	= 0,	//this var indicates the user button status (RELEASED or PRESSED)
-		user_bt_count	= 0;	//counter to debounce the button
+uint8_t FlagEXTI 	= 0,	//this flag is set when there's an EXTI 10 interrupt
+		UsrBtStatus	= 0,	//this var indicates the user button status (RELEASED or PRESSED)
+		UsrBtCount	= 0;	//counter to debounce the button
 
 void EXTI4_15_IRQHandler (void)
 {
 	if(EXTI->PR & EXTI_PR_PIF10)		//if there's an EXTI interrupt
 	{
 		EXTI->PR |= EXTI_PR_PIF10;		//clear the EXTI flag
-		if(USR_BT_STATUS == RELEASED)	//if we haven't recognized the user button was definitely pressed yet
+		if(UsrBtStatus == RELEASED)	//if we haven't recognized the user button was definitely pressed yet
 		{
-			flag_EXTI = 1;				//we set the flag_EXTI
-			user_bt_count = 0;			//and reset the user_bt_count
+			FlagEXTI = 1;				//we set the FlagEXTI
+			UsrBtCount = 0;			//and reset the UsrBtCount
 		}
 	}
 }
@@ -71,28 +71,28 @@ int main(void)
 
 	while(1)
 	{
-		if(flag_EXTI)									//if there was an EXTI interrupt
+		if(FlagEXTI)									//if there was an EXTI interrupt
 		{
-			if(user_bt_count < 250)						//button debouncing procedure
+			if(UsrBtCount < 250)						//button debouncing procedure
 			{
-				if(user_bt_count++ >= BUTTON_DEBOUNCE)	//we increment user_bt_count until it reaches BUTTON_DEBOUNCE value
+				if(UsrBtCount++ >= BUTTON_DEBOUNCE)	//we increment UsrBtCount until it reaches BUTTON_DEBOUNCE value
 				{
-					USR_BT_STATUS = PRESSED;			//then we recognize the button is definitely pressed
-					flag_EXTI = 0;						//and clear the flag_EXTI
+					UsrBtStatus = PRESSED;			//then we recognize the button is definitely pressed
+					FlagEXTI = 0;						//and clear the FlagEXTI
 				}
 				else
 				{
-					USR_BT_STATUS = RELEASED;			//or the button is not pressed
+					UsrBtStatus = RELEASED;			//or the button is not pressed
 				}
 			}
 		}
 
-		if(USR_BT_STATUS == PRESSED)				//when we recognized the user button was pressed
+		if(UsrBtStatus == PRESSED)				//when we recognized the user button was pressed
 		{
 			if((!USR_BT_PRESS))						//if it was then released, tha uC start taking action
 			{
 				GREEN_LED_OFF;						//turn the green led off
-				USR_BT_STATUS = RELEASED;			//set user button status as RELEASED
+				UsrBtStatus = RELEASED;			//set user button status as RELEASED
 
 				__WFI();							//enters stop mode
 
@@ -100,7 +100,7 @@ int main(void)
 
 				GREEN_LED_ON;						//turn the green led on again
 
-				flag_EXTI = 0;						//clear flag_EXTI after waking up (it is set since we pressed the button to wake up)
+				FlagEXTI = 0;						//clear FlagEXTI after waking up (it is set since we pressed the button to wake up)
 				EXTI->PR |= EXTI_PR_PIF10;			//clear EXTI flag after waking up (it is set since we pressed the button to wake up)
 			}
 		}
