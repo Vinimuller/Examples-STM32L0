@@ -47,15 +47,10 @@ int main(void)
 					UsrBtStatus = RELEASED;		//set user button status as RELEASED
 
 					PWR->CR  |=	PWR_CR_DBP;		//enable write access to the RTC and RCC CSR registers
-					// --- Unlocking RTC's write protection
-					RTC->WPR = 0xCA;
-					RTC->WPR = 0x53;
-					// --- RTC's unlocked
 					RTC->CR |= RTC_CR_WUTE;		//enables RTC - starts counting
 
-					__WFI();					//stop mode - reset on wakeup (check RCC_CSR_SBF)
+					__WFI();					//stop mode - resets the uC on wakeup (check RCC_CSR_SBF)
 				}
-
 			}
 		}
 		else
@@ -122,15 +117,14 @@ void MCU_Init(void)
 	while(!(RTC->ISR & RTC_ISR_WUTWF));			//polling WUTWF until it is set
 	RTC->ISR &= ~RTC_ISR_WUTF;					//clears RTC wakeup flag
 	RTC->ISR |= RTC_ISR_INIT;					//RTC enters initialization mode
-	while(!(RTC->ISR & RTC_ISR_INITF));
+	while(!(RTC->ISR & RTC_ISR_INITF));			//polling initialization mode flag
 	RTC->PRER = (36 << RTC_PRER_PREDIV_A_Pos);	//sets asynchronous prescaler to 36 (f_apre = 1 kHz)
 	RTC->WUTR = 65535;							//wakeup timer set to 30 seconds
-	RTC->CR		&=	~RTC_CR_WUCKSEL_Msk;		//RTC/16
-	RTC->CR 	|=	RTC_CR_WUTIE		;		//enables periodic wakeup interrupt (to exit from stop mode)
+	RTC->CR	 &=	~RTC_CR_WUCKSEL_Msk;			//RTC/16
+	RTC->CR	 |=	RTC_CR_WUTIE;					//enables periodic wakeup interrupt (to exit from stop mode)
 	RTC->ISR &= ~RTC_ISR_INIT;					//RTC exits initialization mode
-	while(RTC->ISR & RTC_ISR_INITF);
-
-	PWR->CR 	&= ~PWR_CR_DBP;					//disable write access to the RTC registers
+	while(RTC->ISR & RTC_ISR_INITF);			//polling initialization mode flag
+	PWR->CR &= ~PWR_CR_DBP;						//disable write access to the RTC registers
 //	RTC->WPR = 0xFE; /* (6) Disable write access */ //?
 //	RTC->WPR = 0x64; /* (6) Disable write access */ //?
 //	RTC->WPR = 0xFF; /*RTC registers can no more be modified*/	//?
