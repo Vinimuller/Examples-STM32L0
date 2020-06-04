@@ -71,19 +71,16 @@ int main(void)
 
 	while(1)
 	{
-		if(FlagEXTI)									//if there was an EXTI interrupt
-		{
-			if(UsrBtCount < 250)						//button debouncing procedure
+		if(FlagEXTI)												//if there was an EXTI interrupt
+		{															//we increment UsrBtCount
+			if((USR_BT_PRESS) && (UsrBtCount++ >= BUTTON_DEBOUNCE))	//until it reaches BUTTON_DEBOUNCE value and
+			{														//check again if the button is pressed
+				UsrBtStatus = PRESSED;								//then we recognize the button is definitely pressed
+				FlagEXTI = 0;										//and clear the FlagEXTI
+			}
+			else
 			{
-				if(UsrBtCount++ >= BUTTON_DEBOUNCE)	//we increment UsrBtCount until it reaches BUTTON_DEBOUNCE value
-				{
-					UsrBtStatus = PRESSED;			//then we recognize the button is definitely pressed
-					FlagEXTI = 0;						//and clear the FlagEXTI
-				}
-				else
-				{
-					UsrBtStatus = RELEASED;			//or the button is not pressed
-				}
+				UsrBtStatus = RELEASED;								//or the button is not pressed
 			}
 		}
 
