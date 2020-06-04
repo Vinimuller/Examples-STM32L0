@@ -98,13 +98,14 @@ void MCU_Init(void)
 	/*							   *
 	 *  --- RTC INITIALIZATION --- *
 	 *							   */
+	// --- Resetting RTC registers (debug purpose)
+	RCC->CSR |= RCC_CSR_RTCRST;
+	while(!(RCC->CSR & RCC_CSR_RTCRST));
+	RCC->CSR &= ~RCC_CSR_RTCRST;
+	while((RCC->CSR & RCC_CSR_RTCRST));
+
 	RCC->CSR |= RCC_CSR_LSION;					//LSI oscillator ON
 	while(!(RCC->CSR & RCC_CSR_LSIRDY));		//poll until LSI is stable
-
-//	RCC->CSR |= RCC_CSR_RTCRST;
-//	while(!(RCC->CSR & RCC_CSR_RTCRST));
-//	RCC->CSR &= ~RCC_CSR_RTCRST;
-//	while((RCC->CSR & RCC_CSR_RTCRST));
 
 	PWR->CR  |=	PWR_CR_DBP;						//enable write access to the RTC and RCC CSR registers
 	RCC->CSR |=	RCC_CSR_RTCSEL_LSI	|			//sets LSI as RTC clock source (37 kHz)
@@ -118,10 +119,9 @@ void MCU_Init(void)
 	RTC->ISR &= ~RTC_ISR_WUTF;					//clears RTC wakeup flag
 	RTC->ISR |= RTC_ISR_INIT;					//RTC enters initialization mode
 	while(!(RTC->ISR & RTC_ISR_INITF));			//polling initialization mode flag
-	RTC->PRER = (36 << RTC_PRER_PREDIV_A_Pos);	//sets asynchronous prescaler to 36 (f_apre = 1 kHz)
-	RTC->WUTR = 65535;							//wakeup timer set to 30 seconds
-	RTC->CR	 &=	~RTC_CR_WUCKSEL_Msk;			//RTC/16
-	RTC->CR	 |=	RTC_CR_WUTIE;					//enables periodic wakeup interrupt (to exit from stop mode)
+	RTC->WUTR = 35;								//wakeup timer set to 30 seconds
+	RTC->CR	 |=	RTC_CR_WUCKSEL_2	|			//10x: ck_spre (usually 1 Hz) clock is selected
+				RTC_CR_WUTIE;					//enables periodic wakeup interrupt (to exit from stop mode)
 	RTC->ISR &= ~RTC_ISR_INIT;					//RTC exits initialization mode
 	while(RTC->ISR & RTC_ISR_INITF);			//polling initialization mode flag
 	PWR->CR &= ~PWR_CR_DBP;						//disable write access to the RTC registers
