@@ -93,7 +93,7 @@ int main(void)
 
 				__WFI();							//enters stop mode
 
-				while(USR_BT_PRESS);				//holds here to wake up from stop mode
+			//	while(USR_BT_PRESS);				//holds here to wake up from stop mode
 
 				GREEN_LED_ON;						//turn the green led on again
 
