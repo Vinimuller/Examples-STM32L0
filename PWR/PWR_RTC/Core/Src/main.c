@@ -12,30 +12,7 @@
 //--- GENERAL
 #define RTC_30_SECONDS	32000	//used for RTC config
 
-void MCU_Init(void);
-
 int main(void)
-{
-	MCU_Init();
-
-	while(1)
-	{
-		if(USR_BT_PRESS)
-		{
-			GREEN_LED_OFF;				//turn the green led off
-			while(USR_BT_PRESS);		//hold here if the button is still pressed
-
-			PWR->CR |= PWR_CR_DBP;		//enable write access to the RTC and RCC CSR registers
-			RTC->CR |= RTC_CR_WUTE;		//enables RTC - starts counting
-
-			__WFI();					//stop mode - resets the uC on wake-up (check RCC_CSR_SBF)
-		}
-	}
-
-	return 0;
-}
-
-void MCU_Init(void)
 {
 	/*							   *
 	 * --- GPIO INITIALIZATION --- *
@@ -99,7 +76,20 @@ void MCU_Init(void)
 	RTC->ISR &= ~RTC_ISR_INIT;					//RTC exits initialization mode
 	while(RTC->ISR & RTC_ISR_INITF);			//polling initialization mode flag
 	PWR->CR &= ~PWR_CR_DBP;						//disable write access to the RTC registers
-//	RTC->WPR = 0xFE; /* (6) Disable write access */ //?
-//	RTC->WPR = 0x64; /* (6) Disable write access */ //?
-//	RTC->WPR = 0xFF; /*RTC registers can no more be modified*/	//?
+
+	while(1)
+	{
+		if(USR_BT_PRESS)
+		{
+			GREEN_LED_OFF;				//turn the green led off
+			while(USR_BT_PRESS);		//hold here if the button is still pressed
+
+			PWR->CR |= PWR_CR_DBP;		//enable write access to the RTC and RCC CSR registers
+			RTC->CR |= RTC_CR_WUTE;		//enables RTC - starts counting
+
+			__WFI();					//stop mode - resets the uC on wake-up (check RCC_CSR_SBF)
+		}
+	}
+
+	return 0;
 }
