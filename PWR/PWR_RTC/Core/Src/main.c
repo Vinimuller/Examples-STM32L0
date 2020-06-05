@@ -10,15 +10,7 @@
 #define TOGGLE_GREEN_LED	(GPIOA->ODR ^=GPIO_IDR_ID7_Msk)
 
 //--- GENERAL
-#define BUTTON_DEBOUNCE	50		//constant for button debounce
-#define RELEASED		0		//user button status define
-#define	PRESSED			1		//user button status define
 #define RTC_30_SECONDS	32000	//used for RTC config
-
-//------ VARIABLES
-uint8_t FlagEXTI 	= 0,		//this flag is set when there's an EXTI 10 interrupt
-		UsrBtStatus	= 0,		//this var indicates the user button status (RELEASED or PRESSED)
-		UsrBtCount	= 0;		//counter to debounce the button
 
 void MCU_Init(void);
 
@@ -30,33 +22,13 @@ int main(void)
 	{
 		if(USR_BT_PRESS)
 		{
-			if(UsrBtCount++ >= BUTTON_DEBOUNCE)	//we increment UsrBtCount until it reaches BUTTON_DEBOUNCE value
-			{
-				UsrBtStatus = PRESSED;			//then we recognize the button is definitely pressed
-				FlagEXTI = 0;					//and clear the FlagEXTI
-			}
-			else
-			{
-				UsrBtStatus = RELEASED;			//or the button is not pressed
-			}
+			GREEN_LED_OFF;				//turn the green led off
+			while(USR_BT_PRESS);		//hold here if the button is still pressed
 
-			if(UsrBtStatus == PRESSED)			//when we recognized the user button was pressed
-			{
-				if((!USR_BT_PRESS))				//if it was then released, then the uC start taking action
-				{
-					GREEN_LED_OFF;				//turn the green led off
-					UsrBtStatus = RELEASED;		//set user button status as RELEASED
+			PWR->CR |= PWR_CR_DBP;		//enable write access to the RTC and RCC CSR registers
+			RTC->CR |= RTC_CR_WUTE;		//enables RTC - starts counting
 
-					PWR->CR  |=	PWR_CR_DBP;		//enable write access to the RTC and RCC CSR registers
-					RTC->CR |= RTC_CR_WUTE;		//enables RTC - starts counting
-
-					__WFI();					//stop mode - resets the uC on wake-up (check RCC_CSR_SBF)
-				}
-			}
-		}
-		else
-		{
-			UsrBtCount = 0;
+			__WFI();					//stop mode - resets the uC on wake-up (check RCC_CSR_SBF)
 		}
 	}
 
