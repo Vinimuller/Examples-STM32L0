@@ -13,6 +13,7 @@
 #define BUTTON_DEBOUNCE	50		//constant for button debounce
 #define RELEASED		0		//user button status define
 #define	PRESSED			1		//user button status define
+#define RTC_30_SECONDS	32000	//used for RTC config
 
 //------ VARIABLES
 uint8_t FlagEXTI 	= 0,		//this flag is set when there's an EXTI 10 interrupt
@@ -41,7 +42,7 @@ int main(void)
 
 			if(UsrBtStatus == PRESSED)			//when we recognized the user button was pressed
 			{
-				if((!USR_BT_PRESS))				//if it was then released, tha uC start taking action
+				if((!USR_BT_PRESS))				//if it was then released, then the uC start taking action
 				{
 					GREEN_LED_OFF;				//turn the green led off
 					UsrBtStatus = RELEASED;		//set user button status as RELEASED
@@ -49,7 +50,7 @@ int main(void)
 					PWR->CR  |=	PWR_CR_DBP;		//enable write access to the RTC and RCC CSR registers
 					RTC->CR |= RTC_CR_WUTE;		//enables RTC - starts counting
 
-					__WFI();					//stop mode - resets the uC on wakeup (check RCC_CSR_SBF)
+					__WFI();					//stop mode - resets the uC on wake-up (check RCC_CSR_SBF)
 				}
 			}
 		}
@@ -119,7 +120,8 @@ void MCU_Init(void)
 	RTC->ISR &= ~RTC_ISR_WUTF;					//clears RTC wakeup flag
 	RTC->ISR |= RTC_ISR_INIT;					//RTC enters initialization mode
 	while(!(RTC->ISR & RTC_ISR_INITF));			//polling initialization mode flag
-	RTC->WUTR = 35;								//wakeup timer set to 30 seconds
+	RTC->PRER = (36 << RTC_PRER_PREDIV_S_Pos);	//set f_apre to 1 kHz
+	RTC->WUTR = RTC_30_SECONDS;					//wakeup timer set to 30 seconds
 	RTC->CR	 |=	RTC_CR_WUCKSEL_2	|			//10x: ck_spre (usually 1 Hz) clock is selected
 				RTC_CR_WUTIE;					//enables periodic wakeup interrupt (to exit from stop mode)
 	RTC->ISR &= ~RTC_ISR_INIT;					//RTC exits initialization mode
