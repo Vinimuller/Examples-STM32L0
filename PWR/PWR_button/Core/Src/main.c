@@ -85,17 +85,19 @@ int main(void)
 			}
 		}
 
-		if(usrBtStatus == PRESSED)				//when we recognized the user button was pressed
+		if(usrBtStatus == PRESSED)					//when we recognized the user button was pressed
 		{
-			if((!USR_BT_PRESS))					//if it was then released, tha uC start taking action
+			if((!USR_BT_PRESS))						//if it was then released, tha uC start taking action
 			{
-				GREEN_LED_OFF;					//turn the green led off
-				usrBtStatus = RELEASED;			//set user button status as RELEASED
+				GREEN_LED_OFF;						//turn the green led off
+				usrBtStatus = RELEASED;				//set user button status as RELEASED
+				RCC->IOPENR &= ~RCC_IOPENR_GPIOAEN;	//disable GPIOA clock
 
-				__WFI();						//enters stop mode
+				__WFI();							//enters stop mode
 
-				GREEN_LED_ON;					//turn the green led on again
-				flagEXTI = 0;					//clear flagEXTI after waking up (it is set since we pressed the button to wake up)
+				RCC->IOPENR |= RCC_IOPENR_GPIOAEN;	//enable GPIOA clock
+				GREEN_LED_ON;						//turn the green led on again
+				flagEXTI = 0;						//clear flagEXTI after waking up (it is set since we pressed the button to wake up)
 			}
 		}
 	}
