@@ -36,13 +36,13 @@ int main(void)
 	 * --- STANDBY MODE INITIALIZATION --- *
 	 *									   */
 	RCC->APB1ENR |= RCC_APB1ENR_PWREN;	//enable PWR clock
-	SCB->SCR = SCB_SCR_SLEEPDEEP_Msk; 	//low-power mode = stop mode
+	SCB->SCR = SCB_SCR_SLEEPDEEP_Msk; 	//low-power mode = deep sleep
 	PWR->CR |= PWR_CR_PDDS;				//making sure we're entering standby mode
 	PWR->CR |= PWR_CR_CWUF		|		//clears WUF after 2 system clock cycles
 				PWR_CR_LPSDSR	|		//voltage regulator in low-power mode
 				PWR_CR_ULP		;		//ultra low power mode enable
 
-	//entering stop mode procedure
+	//entering standy mode procedure
 	DBGMCU->CR |= DBGMCU_CR_DBG_STOP;	//this bit needs to be set if you're going to debug this code
 
 	/*							   *
@@ -72,7 +72,7 @@ int main(void)
 	RTC->PRER = (36 << RTC_PRER_PREDIV_S_Pos);	//set f_apre to 1 kHz
 	RTC->WUTR = RTC_30_SECONDS;					//wakeup timer set to 30 seconds
 	RTC->CR	 |=	RTC_CR_WUCKSEL_2	|			//10x: ck_spre (usually 1 Hz) clock is selected
-				RTC_CR_WUTIE;					//enables periodic wakeup interrupt (to exit from stop mode)
+				RTC_CR_WUTIE;					//enables periodic wakeup interrupt (to exit from standy mode)
 	RTC->ISR &= ~RTC_ISR_INIT;					//RTC exits initialization mode
 	while(RTC->ISR & RTC_ISR_INITF);			//polling initialization mode flag
 	PWR->CR &= ~PWR_CR_DBP;						//disable write access to the RTC registers
@@ -87,7 +87,7 @@ int main(void)
 			PWR->CR |= PWR_CR_DBP;		//enable write access to the RTC and RCC CSR registers
 			RTC->CR |= RTC_CR_WUTE;		//enables RTC - starts counting
 
-			__WFI();					//stop mode - resets the uC on wake-up (check RCC_CSR_SBF)
+			__WFI();					//standy mode - resets the uC on wake-up (check RCC_CSR_SBF)
 		}
 	}
 
