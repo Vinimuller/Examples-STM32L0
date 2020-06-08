@@ -11,6 +11,8 @@
 
 //--- GENERAL
 #define RTC_30_SECONDS	32000	//used for RTC config
+#define RTC_KEY1		0xCA	//1st key to unlock RTC's registers (write to RTC_WRP)
+#define RTC_KEY2		0x53	//2nd key to unlock RTC's registers (write to RTC_WRP)
 
 int main(void)
 {
@@ -61,8 +63,8 @@ int main(void)
 	RCC->CSR |=	RCC_CSR_RTCSEL_LSI	|			//sets LSI as RTC clock source (37 kHz)
 				RCC_CSR_RTCEN		;			//enables the RTC clock (those bits are write protected!)
 	// --- Unlocking RTC's write protection
-	RTC->WPR = 0xCA;
-	RTC->WPR = 0x53;
+	RTC->WPR = RTC_KEY1;
+	RTC->WPR = RTC_KEY2;
 	// --- RTC's unlocked
 	RTC->CR &= ~RTC_CR_WUTE;					//disables the wakeup timer
 	while(!(RTC->ISR & RTC_ISR_WUTWF));			//polling WUTWF until it is set
