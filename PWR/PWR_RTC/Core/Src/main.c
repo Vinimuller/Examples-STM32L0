@@ -41,7 +41,6 @@ int main(void)
 	SCB->SCR = SCB_SCR_SLEEPDEEP_Msk; 	//low-power mode = deep sleep
 	PWR->CR |= PWR_CR_PDDS;				//making sure we're entering standby mode
 	PWR->CR |= PWR_CR_CWUF		|		//clears WUF after 2 system clock cycles
-				PWR_CR_LPSDSR	|		//voltage regulator in low-power mode
 				PWR_CR_ULP		;		//ultra low power mode enable
 
 	//entering standy mode procedure
