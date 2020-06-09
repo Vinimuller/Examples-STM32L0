@@ -67,9 +67,11 @@ int main(void)
 			GREEN_LED_OFF;						//turn the green led off
 			while(USR_BT_PRESS);				//holds here if the button is still pressed
 			RCC->IOPENR &= ~RCC_IOPENR_GPIOAEN;	//disable GPIOA clock
+			RCC->APB1ENR &= ~RCC_APB1ENR_PWREN;	//disable PWR clock
 
 			__WFI();							//enters stop mode
 
+			RCC->APB1ENR |= RCC_APB1ENR_PWREN;	//enable PWR clock
 			RCC->IOPENR |= RCC_IOPENR_GPIOAEN;	//enable GPIOA clock
 			while(USR_BT_PRESS);				//holds here if the button is still pressed
 			GREEN_LED_ON;						//turn the green led on again
