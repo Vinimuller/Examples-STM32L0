@@ -69,7 +69,7 @@ int main(void)
 	RTC->ISR &= ~RTC_ISR_WUTF;					//clears RTC wakeup flag
 	RTC->ISR |= RTC_ISR_INIT;					//RTC enters initialization mode
 	while(!(RTC->ISR & RTC_ISR_INITF));			//polling initialization mode flag
-	RTC->PRER = (36 << RTC_PRER_PREDIV_S_Pos);	//set f_apre to 1 kHz
+	RTC->PRER = (36 << RTC_PRER_PREDIV_A_Pos);	//set f_apre to 1 kHz
 	RTC->WUTR = RTC_30_SECONDS;					//wakeup timer set to 30 seconds
 	RTC->CR	 |=	RTC_CR_WUCKSEL_2	|			//10x: ck_spre (usually 1 Hz) clock is selected
 				RTC_CR_WUTIE;					//enables periodic wakeup interrupt (to exit from standy mode)
