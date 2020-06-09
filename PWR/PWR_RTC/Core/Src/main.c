@@ -10,9 +10,9 @@
 #define TOGGLE_GREEN_LED	(GPIOA->ODR ^=GPIO_IDR_ID7_Msk)
 
 //--- GENERAL
-#define RTC_30_SECONDS	32000	//used for RTC config
-#define RTC_KEY1		0xCA	//1st key to unlock RTC's registers (write to RTC_WRP)
-#define RTC_KEY2		0x53	//2nd key to unlock RTC's registers (write to RTC_WRP)
+#define RTC_30_SECONDS	32000	//used for RTC config, equals to 30 seconds (time spent in standy mode)
+#define RTC_KEY1		0xCA	//1st key to unlock RTC's registers (write to RTC_WPR)
+#define RTC_KEY2		0x53	//2nd key to unlock RTC's registers (write to RTC_WPR)
 
 int main(void)
 {
@@ -82,7 +82,7 @@ int main(void)
 		if(USR_BT_PRESS)
 		{
 			GREEN_LED_OFF;				//turn the green led off
-			while(USR_BT_PRESS);		//hold here if the button is still pressed
+			while(USR_BT_PRESS);		//hold here if the button is still pressed (debounce)
 
 			PWR->CR |= PWR_CR_DBP;		//enable write access to the RTC and RCC CSR registers
 			RTC->CR |= RTC_CR_WUTE;		//enables RTC - starts counting
