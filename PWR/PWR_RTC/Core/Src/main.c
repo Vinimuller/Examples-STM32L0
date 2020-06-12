@@ -39,12 +39,12 @@ int main(void)
 	 *									   */
 	RCC->APB1ENR |= RCC_APB1ENR_PWREN;	//enable PWR clock
 	SCB->SCR = SCB_SCR_SLEEPDEEP_Msk; 	//low-power mode = deep sleep
-	PWR->CR |= PWR_CR_PDDS;				//making sure we're entering standby mode
-	PWR->CR |= PWR_CR_CWUF		|		//clears WUF after 2 system clock cycles
+	PWR->CR |= 	PWR_CR_PDDS;			//making sure we're entering standby mode
+	PWR->CR |= 	PWR_CR_CWUF		|		//clears WUF after 2 system clock cycles
 				PWR_CR_ULP		;		//ultra low power mode enable
 
 	//entering standy mode procedure
-	DBGMCU->CR |= DBGMCU_CR_DBG_STOP;	//this bit needs to be set if you're going to debug this code
+	DBGMCU->CR |= DBGMCU_CR_DBG_STANDBY;	//this bit needs to be set if you're going to debug this code
 
 	/*							   *
 	 *  --- RTC INITIALIZATION --- *
