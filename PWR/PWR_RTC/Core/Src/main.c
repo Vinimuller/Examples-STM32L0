@@ -57,8 +57,8 @@ int main(void)
 
 	PWR->CR  |=	PWR_CR_DBP;						//enable write access to the RTC and RCC CSR registers
 	RCC->CSR |=	RCC_CSR_RTCSEL_LSI	|			//sets LSI as RTC clock source (37 kHz)
-				RCC_CSR_RTCEN		;			//enables the RTC clock (those bits are write protected!)
-	RCC->CSR |= RCC_CSR_LSION;					//LSI oscillator ON
+				RCC_CSR_RTCEN		|			//enables the RTC clock (those bits are write protected!)
+				RCC_CSR_LSION;					//LSI oscillator ON
 	while(!(RCC->CSR & RCC_CSR_LSIRDY));		//poll until LSI is stable
 	// --- Unlocking RTC's write protection
 	RTC->WPR = RTC_KEY1;
