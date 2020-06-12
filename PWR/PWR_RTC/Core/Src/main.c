@@ -70,9 +70,9 @@ int main(void)
 	RTC->ISR |= RTC_ISR_INIT;						//RTC enters initialization mode
 	while(!(RTC->ISR & RTC_ISR_INITF));				//polling initialization mode flag
 	RTC->PRER = (( 36 << RTC_PRER_PREDIV_A_Pos) |	//set f_apre to 100 Hz
-				 (999 << RTC_PRER_PREDIV_S_Pos));	//set f_spre to 1 Hz
+				 (999 << RTC_PRER_PREDIV_S_Pos));	//set f_spre to 1 Hz - RTC clock source
 	RTC->WUTR = RTC_30_SECONDS;						//wakeup timer set to 30 seconds
-	RTC->CR	 |=	RTC_CR_WUCKSEL_2	|				//10x: ck_spre (usually 1 Hz) clock is selected
+	RTC->CR	 |=	RTC_CR_WUCKSEL_2	|				//10x: ck_spre as RTC clock input (1 Hz)
 				RTC_CR_WUTIE;						//enables periodic wakeup interrupt (to exit from standy mode)
 	RTC->ISR &= ~RTC_ISR_INIT;						//RTC exits initialization mode
 	while(RTC->ISR & RTC_ISR_INITF);				//polling initialization mode flag
