@@ -10,7 +10,7 @@
 #define TOGGLE_GREEN_LED	(GPIOA->ODR ^=GPIO_IDR_ID7_Msk)
 
 //--- GENERAL
-#define RTC_30_SECONDS	32000	//used for RTC config, equals to 30 seconds (time spent in standy mode)
+#define RTC_30_SECONDS	(30 + 1)//used for RTC config, equals to 30 seconds (time spent in standy mode)
 #define RTC_KEY1		0xCA	//1st key to unlock RTC's registers (write to RTC_WPR)
 #define RTC_KEY2		0x53	//2nd key to unlock RTC's registers (write to RTC_WPR)
 
@@ -64,18 +64,19 @@ int main(void)
 	RTC->WPR = RTC_KEY1;
 	RTC->WPR = RTC_KEY2;
 	// --- RTC's unlocked
-	RTC->CR &= ~RTC_CR_WUTE;					//disables the wakeup timer
-	while(!(RTC->ISR & RTC_ISR_WUTWF));			//polling WUTWF until it is set
-	RTC->ISR &= ~RTC_ISR_WUTF;					//clears RTC wakeup flag
-	RTC->ISR |= RTC_ISR_INIT;					//RTC enters initialization mode
-	while(!(RTC->ISR & RTC_ISR_INITF));			//polling initialization mode flag
-	RTC->PRER = (36 << RTC_PRER_PREDIV_A_Pos);	//set f_apre to 1 kHz
-	RTC->WUTR = RTC_30_SECONDS;					//wakeup timer set to 30 seconds
-	RTC->CR	 |=	RTC_CR_WUCKSEL_2	|			//10x: ck_spre (usually 1 Hz) clock is selected
-				RTC_CR_WUTIE;					//enables periodic wakeup interrupt (to exit from standy mode)
-	RTC->ISR &= ~RTC_ISR_INIT;					//RTC exits initialization mode
-	while(RTC->ISR & RTC_ISR_INITF);			//polling initialization mode flag
-	PWR->CR &= ~PWR_CR_DBP;						//disable write access to the RTC registers
+	RTC->CR &= ~RTC_CR_WUTE;						//disables the wakeup timer
+	while(!(RTC->ISR & RTC_ISR_WUTWF));				//polling WUTWF until it is set
+	RTC->ISR &= ~RTC_ISR_WUTF;						//clears RTC wakeup flag
+	RTC->ISR |= RTC_ISR_INIT;						//RTC enters initialization mode
+	while(!(RTC->ISR & RTC_ISR_INITF));				//polling initialization mode flag
+	RTC->PRER = (( 36 << RTC_PRER_PREDIV_A_Pos) |	//set f_apre to 100 Hz
+				 (999 << RTC_PRER_PREDIV_S_Pos));	//set f_spre to 1 Hz
+	RTC->WUTR = RTC_30_SECONDS;						//wakeup timer set to 30 seconds
+	RTC->CR	 |=	RTC_CR_WUCKSEL_2	|				//10x: ck_spre (usually 1 Hz) clock is selected
+				RTC_CR_WUTIE;						//enables periodic wakeup interrupt (to exit from standy mode)
+	RTC->ISR &= ~RTC_ISR_INIT;						//RTC exits initialization mode
+	while(RTC->ISR & RTC_ISR_INITF);				//polling initialization mode flag
+	PWR->CR &= ~PWR_CR_DBP;							//disable write access to the RTC registers
 
 	while(1)
 	{
