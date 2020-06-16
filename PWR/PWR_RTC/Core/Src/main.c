@@ -49,12 +49,6 @@ int main(void)
 	/*							   *
 	 *  --- RTC INITIALIZATION --- *
 	 *							   */
-	// --- Resetting RTC registers (debug purpose)
-	RCC->CSR |= RCC_CSR_RTCRST;
-	while(!(RCC->CSR & RCC_CSR_RTCRST));
-	RCC->CSR &= ~RCC_CSR_RTCRST;
-	while((RCC->CSR & RCC_CSR_RTCRST));
-
 	PWR->CR  |=	PWR_CR_DBP;						//enable write access to the RTC and RCC CSR registers
 	RCC->CSR |=	RCC_CSR_RTCSEL_LSI	|			//sets LSI as RTC clock source (37 kHz)
 				RCC_CSR_RTCEN		|			//enables the RTC clock
