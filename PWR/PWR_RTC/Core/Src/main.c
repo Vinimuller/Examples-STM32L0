@@ -69,6 +69,7 @@ int main(void)
 				RTC_CR_WUTIE;						//enables periodic wakeup interrupt (to exit from standy mode)
 	RTC->ISR &= ~RTC_ISR_INIT;						//RTC exits initialization mode
 	while(RTC->ISR & RTC_ISR_INITF);				//polling initialization mode flag
+	RTC->WPR = 0xFF;								//lock RTC registers
 	PWR->CR &= ~PWR_CR_DBP;							//disable write access to the RTC registers
 
 	while(1)
@@ -79,6 +80,9 @@ int main(void)
 			while(USR_BT_PRESS);		//hold here if the button is still pressed (debounce)
 
 			PWR->CR |= PWR_CR_DBP;		//enable write access to the RTC and RCC CSR registers
+			// --- Unlocking RTC's write protection
+			RTC->WPR = RTC_KEY1;
+			RTC->WPR = RTC_KEY2;
 			RTC->CR |= RTC_CR_WUTE;		//enables RTC - starts counting
 
 			__WFI();					//standy mode - resets the uC on wake-up (check RCC_CSR_SBF)
