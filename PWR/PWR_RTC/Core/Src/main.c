@@ -10,7 +10,7 @@
 #define TOGGLE_GREEN_LED	(GPIOA->ODR ^=GPIO_IDR_ID7_Msk)
 
 //--- GENERAL
-#define RTC_30_SECONDS	(30 + 1)//used for RTC config, equals to 30 seconds (time spent in standy mode)
+#define RTC_30_SECONDS	(30 + 1)//used for RTC config, equals to 30 seconds (time spent in standby mode)
 #define RTC_KEY1		0xCA	//1st key to unlock RTC's registers (write to RTC_WPR)
 #define RTC_KEY2		0x53	//2nd key to unlock RTC's registers (write to RTC_WPR)
 
@@ -80,12 +80,12 @@ int main(void)
 			while(USR_BT_PRESS);		//hold here if the button is still pressed (debounce)
 
 			PWR->CR |= PWR_CR_DBP;		//enable write access to the RTC and RCC CSR registers
-			// --- Unlocking RTC's write protection
+			// --- Unlocking RTC's write protection - it enables RTC's wakeup timer
 			RTC->WPR = RTC_KEY1;
 			RTC->WPR = RTC_KEY2;
 			RTC->CR |= RTC_CR_WUTE;		//enables RTC - starts counting
 
-			__WFI();					//standy mode - resets the uC on wake-up (check RCC_CSR_SBF)
+			__WFI();					//standby mode - resets the uC on wake-up (check RCC_CSR_SBF)
 		}
 	}
 
